@@ -73,49 +73,6 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
     >
       <Box
         sx={{
-          position: "absolute",
-          right: { xs: 16, md: 32 },
-          bottom: { xs: 24, md: 32 },
-          opacity: previewVidURL ? 1 : 0,
-          transition: "all 1s ease",
-          zIndex: 2,
-          cursor: "pointer",
-          pointerEvents: "all",
-
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 1,
-        }}
-      >
-        <IconButton
-          sx={{
-            backgroundColor: "var(--app-overlay)",
-            border: "1px solid var(--app-border)",
-          }}
-          onClick={() => {
-            setPreviewVidPlaying(!previewVidPlaying);
-          }}
-        >
-          {previewVidPlaying ? <PauseRounded /> : <PlayArrowRounded />}
-        </IconButton>
-
-        <IconButton
-          sx={{
-            backgroundColor: "var(--app-overlay)",
-            border: "1px solid var(--app-border)",
-          }}
-          onClick={() => {
-            setMetaScreenPlayerMuted(!MetaScreenPlayerMuted);
-          }}
-        >
-          {MetaScreenPlayerMuted ? <VolumeOffRounded /> : <VolumeUpRounded />}
-        </IconButton>
-      </Box>
-
-      <Box
-        sx={{
           width: "100%",
           minHeight: { xs: "56vh", md: "66vh" },
           height: "auto",
@@ -133,6 +90,48 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           boxShadow: "var(--app-shadow)",
         }}
       >
+        <Box
+          sx={{
+            position: "absolute",
+            right: { xs: 12, md: 24 },
+            bottom: { xs: 16, md: 24 },
+            opacity: previewVidURL ? 1 : 0,
+            transition: "all 1s ease",
+            zIndex: 3,
+            cursor: "pointer",
+            pointerEvents: "all",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+          }}
+        >
+          <IconButton
+            sx={{
+              backgroundColor: "var(--app-overlay)",
+              border: "1px solid var(--app-border)",
+            }}
+            onClick={() => {
+              setPreviewVidPlaying(!previewVidPlaying);
+            }}
+          >
+            {previewVidPlaying ? <PauseRounded /> : <PlayArrowRounded />}
+          </IconButton>
+
+          <IconButton
+            sx={{
+              backgroundColor: "var(--app-overlay)",
+              border: "1px solid var(--app-border)",
+            }}
+            onClick={() => {
+              setMetaScreenPlayerMuted(!MetaScreenPlayerMuted);
+            }}
+          >
+            {MetaScreenPlayerMuted ? <VolumeOffRounded /> : <VolumeUpRounded />}
+          </IconButton>
+        </Box>
+
         <Box
           sx={{
             position: "absolute",
