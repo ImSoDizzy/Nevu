@@ -14,7 +14,6 @@ import { useBigReader } from "./BigReader";
 import { WatchListButton } from "./MovieItem";
 import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";
-import { getTranscodeImageURL } from "../plex";
 
 function HeroDisplay({ item }: { item: Plex.Metadata }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -124,14 +123,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          background: `linear-gradient(120deg, rgba(16, 17, 28, 0.85) 0%, rgba(16, 17, 28, 0.4) 55%, rgba(16, 17, 28, 0.15) 100%), url(${getTranscodeImageURL(
-            item?.art,
-            1920,
-            1080
-          )})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          backgroundColor: "var(--app-surface)",
           zIndex: 0,
           position: "relative",
           margin: "0 auto",
