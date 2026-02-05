@@ -2,9 +2,7 @@ import { Box, CircularProgress, ButtonGroup, Button } from "@mui/material";
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import HeroDisplay from "../../components/HeroDisplay";
-import MovieItemSlider, {
-  shuffleArray,
-} from "../../components/MovieItemSlider";
+import MovieItemSlider from "../../components/MovieItemSlider";
 import { getLibrary, getLibraryDir, getLibraryMeta } from "../../plex";
 import { getIncludeProps } from "../../plex/QuickFunctions";
 import { motion } from "framer-motion";
@@ -62,17 +60,12 @@ function BrowseRecommendations() {
         ).then(async (media) => {
           const genres = media.Directory;
           if (!genres || !genres.length) return;
-          const genreSelection: Plex.Directory[] = [];
-
-          // Get 5 random genres
-          while (genreSelection.length < Math.min(8, genres.length)) {
-            const genre = genres[Math.floor(Math.random() * genres.length)];
-            if (genreSelection.includes(genre)) continue;
-            genreSelection.push(genre);
-          }
+          const genreSelection = [...genres]
+            .sort((left, right) => left.title.localeCompare(right.title))
+            .slice(0, 8);
 
           resolve(
-            shuffleArray(genreSelection).map((genre) => ({
+            genreSelection.map((genre) => ({
               title: genre.title,
               dir: `/library/sections/${library.librarySectionID}/genre/${genre.key}`,
               link: `/library/sections/${library.librarySectionID}/genre/${genre.key}`,
@@ -155,7 +148,7 @@ function BrowseRecommendations() {
         });
       }
 
-      categoryPool = shuffleArray([...genres, ...categoryPool]);
+      categoryPool = [...categoryPool, ...genres];
 
       if (library.Type?.[0].type === "movie") {
         categoryPool.unshift({

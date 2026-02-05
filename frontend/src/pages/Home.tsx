@@ -6,7 +6,6 @@ import {
   getLibraryMeta,
   getLibrarySecondary,
 } from "../plex";
-import { shuffleArray } from "../common/ArrayExtra";
 import {
   LIBRARY_ORDER_SETTING_KEY,
   sortLibrariesBySettingsOrder,
@@ -166,12 +165,10 @@ async function getRecommendations(libraries: Plex.Directory[]) {
 
     const selectGenres: Plex.Directory[] = [];
 
-    // Get 5 random genres
-    while (selectGenres.length < Math.min(5, genres.length)) {
-      const genre = genres[Math.floor(Math.random() * genres.length)];
-      if (selectGenres.includes(genre)) continue;
-      selectGenres.push(genre);
-    }
+    const sortedGenres = [...genres].sort((left, right) =>
+      left.title.localeCompare(right.title)
+    );
+    selectGenres.push(...sortedGenres.slice(0, 5));
 
     for (const genre of selectGenres) {
       genreSelection.push({
@@ -183,7 +180,7 @@ async function getRecommendations(libraries: Plex.Directory[]) {
     }
   }
 
-  return shuffleArray(genreSelection);
+  return genreSelection;
 }
 
 // get one completely random item from any library
