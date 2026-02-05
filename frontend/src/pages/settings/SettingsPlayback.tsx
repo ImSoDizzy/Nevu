@@ -25,6 +25,7 @@ function SettingsPlayback() {
         <CheckBoxOption
           title="Disable Watchscreen Darkening"
           subtitle="Disables the darkening effect when interacting with the watchscreen."
+          helpText="Turn off the watchscreen dimming overlay."
           checked={settings.DISABLE_WATCHSCREEN_DARKENING === "true"}
           onChange={() => {
             setSetting(
@@ -39,6 +40,7 @@ function SettingsPlayback() {
         <CheckBoxOption
           title="Auto-Match Tracks"
           subtitle="Automatically select subtitles and audio tracks based on your previous choices. (Same language for each episode of a show)"
+          helpText="Reuse your previous subtitle and audio language choices."
           checked={settings.AUTO_MATCH_TRACKS === "true"}
           onChange={() => {
             setSetting(
@@ -51,6 +53,7 @@ function SettingsPlayback() {
         <CheckBoxOption
           title="Auto-Play Next Episode"
           subtitle="Automatically play the next episode when the current one ends."
+          helpText="Start the next episode automatically when one finishes."
           checked={settings.AUTO_NEXT_EP === "true"}
           onChange={() => {
             setSetting(

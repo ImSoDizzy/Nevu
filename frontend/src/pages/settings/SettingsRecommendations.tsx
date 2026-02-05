@@ -12,6 +12,7 @@ import {
 import React, { useEffect } from "react";
 import { DragIndicatorRounded } from "@mui/icons-material";
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
+import SettingHelpIcon from "../../components/settings/SettingHelpIcon";
 import { getAllLibraries, getLibrarySecondary } from "../../plex";
 import { useUserSettings } from "../../states/UserSettingsState";
 import {
@@ -57,10 +58,10 @@ function SettingsRecommendations() {
   const shownByDefault = getRecommendationShownByDefault(settings);
   const shownMode = getRecommendationShownMode(settings);
   const sortMode = getRecommendationSortMode(settings);
-  const maxCategoriesPerLibrary = getRecommendationMaxCategories(settings);
+  const maxCategories = getRecommendationMaxCategories(settings);
   const canReorder = sortMode === "manual";
   const [maxCategoriesInput, setMaxCategoriesInput] = React.useState(
-    maxCategoriesPerLibrary.toString()
+    maxCategories.toString()
   );
 
   useEffect(() => {
@@ -110,8 +111,8 @@ function SettingsRecommendations() {
   }, [settings[LIBRARY_ORDER_SETTING_KEY]]);
 
   useEffect(() => {
-    setMaxCategoriesInput(maxCategoriesPerLibrary.toString());
-  }, [maxCategoriesPerLibrary]);
+    setMaxCategoriesInput(maxCategories.toString());
+  }, [maxCategories]);
 
   const sortedCategories = React.useMemo(() => {
     if (sortMode === "alphabetical") {
@@ -202,7 +203,7 @@ function SettingsRecommendations() {
       <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2, width: "100%" }}>
         <CheckBoxOption
           title="Shown By Default: Enabled"
-          subtitle="New categories are enabled by default in Manual shown-categories mode."
+          helpText="Enable new categories by default when using Manual mode."
           checked={shownByDefault}
           onChange={(checked) => {
             void setSetting(
@@ -229,9 +230,15 @@ function SettingsRecommendations() {
               width: { xs: "100%", md: "280px" },
             }}
           >
-            <Typography sx={{ color: "var(--app-ink-muted)", fontSize: "0.85rem" }}>
-              Shown Categories
-            </Typography>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Typography sx={{ color: "var(--app-ink-muted)", fontSize: "0.85rem" }}>
+                Shown Categories
+              </Typography>
+              <SettingHelpIcon
+                text="Choose how categories are selected for recommendations."
+                ariaLabel="Shown Categories explanation"
+              />
+            </Stack>
             <Select
               size="small"
               value={shownMode}
@@ -256,9 +263,15 @@ function SettingsRecommendations() {
               width: { xs: "100%", md: "280px" },
             }}
           >
-            <Typography sx={{ color: "var(--app-ink-muted)", fontSize: "0.85rem" }}>
-              Sort Mode
-            </Typography>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Typography sx={{ color: "var(--app-ink-muted)", fontSize: "0.85rem" }}>
+                Sort Mode
+              </Typography>
+              <SettingHelpIcon
+                text="Choose how selected categories are ordered."
+                ariaLabel="Sort Mode explanation"
+              />
+            </Stack>
             <Select
               size="small"
               value={sortMode}
@@ -283,9 +296,15 @@ function SettingsRecommendations() {
               width: { xs: "100%", md: "220px" },
             }}
           >
-            <Typography sx={{ color: "var(--app-ink-muted)", fontSize: "0.85rem" }}>
-              Max Categories Per Library
-            </Typography>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Typography sx={{ color: "var(--app-ink-muted)", fontSize: "0.85rem" }}>
+                Max Categories
+              </Typography>
+              <SettingHelpIcon
+                text="Set the maximum number of categories to use from each library. -1 means unlimited per library."
+                ariaLabel="Max Categories explanation"
+              />
+            </Stack>
             <TextField
               size="small"
               type="number"
@@ -303,7 +322,6 @@ function SettingsRecommendations() {
                   step: 1,
                 },
               }}
-              helperText="-1 means unlimited per library"
             />
           </Box>
         </Box>
@@ -342,15 +360,6 @@ function SettingsRecommendations() {
             <Box sx={{ display: "flex", flexDirection: "column" }}>
               <Typography>
                 {allCategoriesChecked ? "Deselect All Categories" : "Select All Categories"}
-              </Typography>
-              <Typography
-                sx={{
-                  color: "var(--app-ink-muted)",
-                  fontSize: "0.9rem",
-                  userSelect: "none",
-                }}
-              >
-                Toggle all listed categories at once.
               </Typography>
             </Box>
           </Stack>
@@ -457,18 +466,7 @@ function SettingsRecommendations() {
                   }}
                 />
 
-                <Box sx={{ display: "flex", flexDirection: "column" }}>
-                  <Typography>{category.title}</Typography>
-                  <Typography
-                    sx={{
-                      color: "var(--app-ink-muted)",
-                      fontSize: "0.9rem",
-                      userSelect: "none",
-                    }}
-                  >
-                    {category.subtitle}
-                  </Typography>
-                </Box>
+                <Typography>{category.title}</Typography>
               </Stack>
             </Box>
           );

@@ -10,6 +10,7 @@ import React, { useEffect } from "react";
 import { DragIndicatorRounded } from "@mui/icons-material";
 import { getAllLibraries } from "../../plex";
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
+import SettingHelpIcon from "../../components/settings/SettingHelpIcon";
 import { useUserSettings } from "../../states/UserSettingsState";
 import {
   LIBRARY_ORDER_SETTING_KEY,
@@ -108,6 +109,7 @@ function SettingsLibraries() {
         <CheckBoxOption
           title="Disable Home Libraries Section"
           subtitle="Disables the section on the home screen where the libraries are displayed."
+          helpText="Hide the libraries section on the home page."
           checked={settings.DISABLE_HOME_SCREEN_LIBRARIES === "true"}
           onChange={() => {
             setSetting(
@@ -212,7 +214,13 @@ function SettingsLibraries() {
                 />
 
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
-                  <Typography>{library.title}</Typography>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <Typography>{library.title}</Typography>
+                    <SettingHelpIcon
+                      text="Show or hide this library in app sections that use library settings."
+                      ariaLabel={`${library.title} explanation`}
+                    />
+                  </Stack>
                   <Typography
                     sx={{
                       color: "var(--app-ink-muted)",
