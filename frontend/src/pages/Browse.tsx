@@ -30,65 +30,87 @@ function Library() {
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "stretch",
         justifyContent: "flex-start",
         width: "100%",
         position: "relative",
+        gap: { xs: 6, md: 8 },
       }}
     >
-      <ButtonGroup
-        variant="outlined"
+      <Box
         sx={{
-          zIndex: 5,
-          mb: 2,
-          right: { xs: 0, md: 0 },
-          top: { xs: 16, md: 16 },
           position: "absolute",
-          opacity: 0.9,
-          filter: "brightness(0.9)",
-
-          "&:hover": {
-            opacity: 1,
-            filter: "brightness(1)",
-            transition: "all 0.4s ease",
-          },
-          transition: "all 1s ease",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 0,
+          background:
+            "radial-gradient(circle at 18% 0%, rgba(80, 70, 225, 0.18), transparent 45%), radial-gradient(circle at 82% 8%, rgba(122, 112, 255, 0.14), transparent 45%)",
+        }}
+      />
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          gap: { xs: 6, md: 8 },
         }}
       >
-        <Button
-          variant={page === "recommendations" ? "contained" : "outlined"}
+        <ButtonGroup
+          variant="outlined"
           sx={{
-            fontWeight: 600,
-            letterSpacing: "0.04em",
-            textTransform: "none",
-            gap: "8px",
-            px: 2.5,
-            transition: "all 0.2s ease-in-out",
-          }}
-          onClick={() => setPage("recommendations")}
-        >
-          Recommendations
-        </Button>
-        <Button
-          variant={page === "browse" ? "contained" : "outlined"}
-          sx={{
-            fontWeight: 600,
-            letterSpacing: "0.04em",
-            textTransform: "none",
-            gap: "8px",
-            px: 2.5,
-            transition: "all 0.2s ease-in-out",
-          }}
-          onClick={() => setPage("browse")}
-        >
-          Browse
-        </Button>
-      </ButtonGroup>
+            zIndex: 5,
+            mb: 2,
+            right: { xs: 0, md: 0 },
+            top: { xs: 16, md: 16 },
+            position: "absolute",
+            opacity: 0.9,
+            filter: "brightness(0.9)",
 
-      <AnimatePresence mode="wait">
-        {page === "recommendations" && <BrowseRecommendations />}
-        {page === "browse" && <BrowseLibrary />}
-      </AnimatePresence>
+            "&:hover": {
+              opacity: 1,
+              filter: "brightness(1)",
+              transition: "all 0.4s ease",
+            },
+            transition: "all 1s ease",
+          }}
+        >
+          <Button
+            variant={page === "recommendations" ? "contained" : "outlined"}
+            sx={{
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+              textTransform: "none",
+              gap: "8px",
+              px: 2.5,
+              transition: "all 0.2s ease-in-out",
+            }}
+            onClick={() => setPage("recommendations")}
+          >
+            Recommendations
+          </Button>
+          <Button
+            variant={page === "browse" ? "contained" : "outlined"}
+            sx={{
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+              textTransform: "none",
+              gap: "8px",
+              px: 2.5,
+              transition: "all 0.2s ease-in-out",
+            }}
+            onClick={() => setPage("browse")}
+          >
+            Browse
+          </Button>
+        </ButtonGroup>
+
+        <AnimatePresence mode="wait">
+          {page === "recommendations" && <BrowseRecommendations />}
+          {page === "browse" && <BrowseLibrary />}
+        </AnimatePresence>
+      </Box>
     </Box>
   );
 }

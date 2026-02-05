@@ -121,12 +121,16 @@ function BrowseLibrary() {
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "stretch",
         justifyContent: "flex-start",
         width: "100%",
         height: "fit-content",
         minHeight: "100%",
         mt: 0,
+        position: "relative",
+        zIndex: 1,
+        gap: { xs: 4, md: 6 },
+        pb: { xs: 6, md: 8 },
       }}
     >
       <Box
@@ -141,7 +145,10 @@ function BrowseLibrary() {
           justifyContent: "flex-start",
           gap: 2,
           py: 1,
-          background: "linear-gradient(180deg, rgba(16, 17, 28, 0.85), rgba(16, 17, 28, 0))",
+          px: "2.5vw",
+          backgroundColor: "rgba(26, 27, 38, 0.85)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid var(--app-border)",
         }}
       >
         <Select
@@ -231,7 +238,7 @@ function BrowseLibrary() {
           justifyContent: "flex-start",
           width: "100%",
           height: "fit-content",
-          px: 0,
+          px: "2.5vw",
           pt: 2,
           pb: 2,
         }}

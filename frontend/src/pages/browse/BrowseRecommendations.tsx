@@ -214,21 +214,24 @@ function BrowseRecommendations() {
         height: "auto",
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "stretch",
         justifyContent: "flex-start",
-        pb: 8,
+        position: "relative",
+        zIndex: 1,
+        gap: { xs: 6, md: 8 },
+        pb: { xs: 6, md: 8 },
       }}
     >
       <HeroDisplay item={featuredItem} />
       <Box
         sx={{
           zIndex: 1,
-          mt: "-8vh",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-start",
-          gap: 6,
+          gap: { xs: 6, md: 8 },
+          mt: { xs: 2, md: 4 },
         }}
       >
         {categories &&
