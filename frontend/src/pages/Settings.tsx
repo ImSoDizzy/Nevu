@@ -29,19 +29,27 @@ function Settings() {
     <Box
       className="app-page"
       sx={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
-        justifyContent: "flex-start",
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "minmax(280px, 1fr) minmax(0, 720px) minmax(0, 1fr)",
+        },
+        alignItems: "start",
+        justifyContent: "center",
         minHeight: "100vh",
         overflow: "auto",
-        gap: 3,
+        columnGap: 3,
+        rowGap: 3,
+        px: "var(--app-gutter)",
+        pt: { xs: 28, md: 34 },
       }}
     >
       <Box
         sx={{
-          width: "280px",
-          height: "100%",
+          gridColumn: { xs: "1 / -1", md: "1 / 2" },
+          justifySelf: { xs: "stretch", md: "start" },
+          width: { xs: "100%", md: "280px" },
+          maxWidth: "280px",
           display: "flex",
           flexDirection: "column",
           backgroundColor: "var(--app-surface)",
@@ -61,8 +69,9 @@ function Settings() {
 
       <Box
         sx={{
+          gridColumn: { xs: "1 / -1", md: "2 / 3" },
+          justifySelf: "center",
           width: "min(720px, 100%)",
-          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
@@ -72,8 +81,6 @@ function Settings() {
           borderRadius: "18px",
           border: "1px solid var(--app-border)",
           boxShadow: "0 18px 35px rgba(7, 8, 15, 0.35)",
-          ml: "auto",
-          mr: "auto",
         }}
       >
         <Routes>
