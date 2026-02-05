@@ -104,6 +104,8 @@ function Appbar() {
         background: "transparent",
         boxShadow: "none",
         border: "none",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         zIndex: 99,
       }}
     >
@@ -238,29 +240,14 @@ S - Skip onscreen markers (intro, credits, etc)
           py: 1.25,
           borderRadius: "var(--app-radius-lg)",
           position: "relative",
-          background: "transparent",
+          background: scrollAtTop
+            ? "linear-gradient(135deg, rgba(36, 38, 60, 0.72), rgba(18, 19, 30, 0.65))"
+            : "linear-gradient(135deg, rgba(36, 38, 60, 0.92), rgba(18, 19, 30, 0.92))",
           border: "1px solid var(--app-border)",
           boxShadow: scrollAtTop
             ? "0 18px 45px rgba(7, 8, 15, 0.35)"
             : "0 24px 60px rgba(7, 8, 15, 0.55)",
           overflow: "hidden",
-          isolation: "isolate",
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            inset: 0,
-            borderRadius: "inherit",
-            background: scrollAtTop
-              ? "linear-gradient(135deg, rgba(36, 38, 60, 0.72), rgba(18, 19, 30, 0.65))"
-              : "linear-gradient(135deg, rgba(36, 38, 60, 0.92), rgba(18, 19, 30, 0.92))",
-            backdropFilter: "blur(18px)",
-            WebkitBackdropFilter: "blur(18px)",
-            zIndex: 0,
-          },
-          "& > *": {
-            position: "relative",
-            zIndex: 1,
-          },
           transition: "all 0.3s ease",
         }}
       >
@@ -906,15 +893,21 @@ function HeadLink({
         borderRadius: 999,
         textDecoration: "none",
         color: active ? "var(--app-nav-pill-text)" : "var(--app-ink)",
-        backgroundColor: active ? "var(--app-nav-pill)" : "transparent",
+        backgroundColor: active ? "rgba(80, 70, 225, 0.35)" : "transparent",
+        backdropFilter: active ? "blur(12px)" : "none",
+        WebkitBackdropFilter: active ? "blur(12px)" : "none",
+        border: active ? "1px solid rgba(255, 255, 255, 0.2)" : "1px solid transparent",
         fontWeight: active ? 700 : 500,
         fontSize: "0.95rem",
         letterSpacing: "0.01em",
         transition: "all 0.2s ease",
         userSelect: "none",
+        position: "relative",
+        overflow: "hidden",
+        isolation: "isolate",
         "&:hover": {
           backgroundColor: active
-            ? "var(--app-nav-pill)"
+            ? "rgba(80, 70, 225, 0.45)"
             : "rgba(255,255,255,0.08)",
           color: active ? "var(--app-nav-pill-text)" : "var(--app-ink)",
         },
