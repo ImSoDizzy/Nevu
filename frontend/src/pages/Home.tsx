@@ -1,13 +1,11 @@
-import { Avatar, Box, CircularProgress, Grid, Typography } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import React, { useEffect } from "react";
 import {
   getAllLibraries,
   getLibraryDir,
   getLibraryMeta,
   getLibrarySecondary,
-  getTranscodeImageURL,
 } from "../plex";
-import { useNavigate } from "react-router-dom";
 import { shuffleArray } from "../common/ArrayExtra";
 import MovieItemSlider from "../components/MovieItemSlider";
 import HeroDisplay from "../components/HeroDisplay";
@@ -69,7 +67,6 @@ export default function Home() {
 
     fetchData();
   }, [settings]);
-  const navigate = useNavigate();
 
   if (loading)
     return (
@@ -91,12 +88,10 @@ export default function Home() {
     <Box
       className="app-page"
       sx={{
-        width: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
         justifyContent: "flex-start",
-        pt: 0,
       }}
     >
       {randomItem && <HeroDisplay item={randomItem} />}
@@ -113,112 +108,6 @@ export default function Home() {
           zIndex: 1,
         }}
       >
-        <Grid container spacing={2} sx={{ px: 0, mt: 1, width: "100%" }}>
-          {libraries
-            ?.filter((e) => ["movie", "show"].includes(e.type || ""))
-            .map((library) => (
-              <Grid
-                size={{ xs: 6, sm: 4, md: 3, lg: 2, xl: 2 }}
-                key={library.key}
-              >
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: "auto",
-                    aspectRatio: "16/9",
-                    display:
-                      settings["DISABLE_HOME_SCREEN_LIBRARIES"] === "true"
-                        ? "none"
-                        : "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "16px",
-                    position: "relative",
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    border: "1px solid var(--app-border)",
-                    boxShadow: "0 12px 30px rgba(8, 4, 2, 0.4)",
-                    transition: "all 0.3s ease",
-
-                    "&:hover": {
-                      transform: "translateY(-6px) scale(1.02)",
-                      boxShadow: "0 18px 36px rgba(8, 4, 2, 0.55)",
-                      borderColor: "var(--app-border-strong)",
-                    },
-                  }}
-                  onClick={() => navigate(`/browse/${library.key}`)}
-                >
-                  {/* Background image */}
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundImage: `url(${getTranscodeImageURL(
-                        library.art,
-                        1920,
-                        1080
-                      )})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      zIndex: -2,
-                    }}
-                  />
-
-                  {/* Theme color overlay */}
-                  <Box
-                    className="overlay"
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background:
-                        "linear-gradient(180deg, rgba(24, 12, 7, 0.7), rgba(20, 10, 6, 0.95))",
-                      opacity: 0.9,
-                      zIndex: -1,
-                      transition: "opacity 0.2s ease",
-                    }}
-                  />
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 1.5,
-                      textAlign: "center",
-                      p: 2,
-                    }}
-                  >
-                    <Avatar
-                      variant="rounded"
-                      src={`${getTranscodeImageURL(library.thumb, 48, 48)}`}
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        boxShadow: "0 8px 16px rgba(8, 4, 2, 0.45)",
-                      }}
-                    />
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        color: "var(--app-ink)",
-                        textShadow: "0px 4px 12px rgba(5, 2, 1, 0.55)",
-                      }}
-                    >
-                      {library.title}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-            ))}
-        </Grid>
-
         <Box
           sx={{
             zIndex: 1,

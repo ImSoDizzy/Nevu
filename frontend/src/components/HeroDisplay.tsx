@@ -68,7 +68,8 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
-        pt: 2,
+        pt: { xs: 2, md: 4 },
+        px: { xs: 2, md: 4 },
       }}
     >
       <Box

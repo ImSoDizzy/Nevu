@@ -34,11 +34,7 @@ function Settings() {
         alignItems: "flex-start",
         justifyContent: "flex-start",
         minHeight: "100vh",
-        width: "100%",
         overflow: "auto",
-        pt: 0,
-        px: 0,
-        pb: 0,
         gap: 3,
       }}
     >

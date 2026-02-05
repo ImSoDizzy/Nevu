@@ -62,12 +62,20 @@ function MovieItemSlider({
   React.useEffect(() => {
     if (!trackRef.current) return;
     const element = trackRef.current;
+    const updateWidth = () => {
+      setTrackWidth(element.getBoundingClientRect().width);
+    };
+    updateWidth();
     const observer = new ResizeObserver((entries) => {
       if (!entries[0]) return;
       setTrackWidth(entries[0].contentRect.width);
     });
     observer.observe(element);
-    return () => observer.disconnect();
+    window.addEventListener("resize", updateWidth);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateWidth);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -92,7 +100,7 @@ function MovieItemSlider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, dir, filter, props, shuffle]);
 
-  if (!items) return <></>;
+  if (!items || items.length === 0) return <></>;
 
   const itemCount = items.slice(0, itemsPerPage * 5).length;
   const visibleWidth = Math.max(trackWidth - edgeWidth * 2, 0);
@@ -111,6 +119,11 @@ function MovieItemSlider({
         width: "100%",
         height: "auto",
         gap: "12px",
+        position: "relative",
+        zIndex: 1,
+        "&:hover": {
+          zIndex: 5,
+        },
       }}
     >
       <Box

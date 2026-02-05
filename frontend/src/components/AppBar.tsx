@@ -6,6 +6,7 @@ import {
   Backdrop,
   Box,
   CircularProgress,
+  ClickAwayListener,
   Divider,
   IconButton,
   InputAdornment,
@@ -244,6 +245,9 @@ S - Skip onscreen markers (intro, credits, etc)
             ? "0 18px 45px rgba(6, 3, 2, 0.35)"
             : "0 24px 60px rgba(6, 3, 2, 0.55)",
           backdropFilter: "blur(18px)",
+          overflow: "hidden",
+          clipPath: "inset(0 round var(--app-radius-lg))",
+          isolation: "isolate",
           transition: "all 0.3s ease",
         }}
       >
@@ -438,276 +442,290 @@ function SearchBar() {
   }, [searchValue]);
 
   return (
-    <>
-      <Backdrop
-        open={searchOpen}
-        sx={{
-          zIndex: 10000,
-          backgroundColor: "var(--app-overlay)",
-        }}
-        onClick={() => {
-          setSearchAnchorEl(null);
-        }}
-      />
-      <TextField
-        id="search-bar"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchRounded />
-            </InputAdornment>
-          ),
-        }}
-        placeholder="Search"
-        variant="outlined"
-        size="small"
-        onKeyDown={(e) => {
-          switch (e.key) {
-            case "Escape":
-              setSearchAnchorEl(null);
-              searchAnchorEl?.blur();
-              break;
-            case "ArrowDown":
-              e.preventDefault();
-              if (searchResults.length === 0) return;
-              setSelectedIndex((prev) =>
-                prev === null ? 0 : Math.min(prev + 1, searchResults.length - 1)
-              );
-              break;
-            case "ArrowUp":
-              e.preventDefault();
-              if (searchResults.length === 0) return;
-              if (selectedIndex === 0) return setSelectedIndex(null);
+    <ClickAwayListener
+      onClickAway={() => {
+        if (!searchOpen) return;
+        setSearchAnchorEl(null);
+      }}
+    >
+      <Box>
+        <Backdrop
+          open={searchOpen}
+          sx={{
+            zIndex: 10000,
+            backgroundColor: "var(--app-overlay)",
+          }}
+          onClick={() => {
+            setSearchAnchorEl(null);
+          }}
+        />
+        <TextField
+          id="search-bar"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchRounded />
+              </InputAdornment>
+            ),
+          }}
+          placeholder="Search"
+          variant="outlined"
+          size="small"
+          onKeyDown={(e) => {
+            switch (e.key) {
+              case "Escape":
+                setSearchAnchorEl(null);
+                searchAnchorEl?.blur();
+                break;
+              case "ArrowDown":
+                e.preventDefault();
+                if (searchResults.length === 0) return;
+                setSelectedIndex((prev) =>
+                  prev === null
+                    ? 0
+                    : Math.min(prev + 1, searchResults.length - 1)
+                );
+                break;
+              case "ArrowUp":
+                e.preventDefault();
+                if (searchResults.length === 0) return;
+                if (selectedIndex === 0) return setSelectedIndex(null);
 
-              setSelectedIndex((prev) =>
-                prev === null ? 0 : Math.max(prev - 1, 0)
-              );
-              break;
-            case "Tab":
-              e.preventDefault();
-              if (searchResults.length === 0) return;
-              // if it gets to the last item, then set to null
-              if (selectedIndex === searchResults.length - 1)
-                return setSelectedIndex(null);
-              setSelectedIndex((prev) =>
-                prev === null ? 0 : Math.min(prev + 1, searchResults.length - 1)
-              );
-              break;
-            case "Enter":
-              if (searchValue.length === 0) return;
+                setSelectedIndex((prev) =>
+                  prev === null ? 0 : Math.max(prev - 1, 0)
+                );
+                break;
+              case "Tab":
+                e.preventDefault();
+                if (searchResults.length === 0) return;
+                // if it gets to the last item, then set to null
+                if (selectedIndex === searchResults.length - 1)
+                  return setSelectedIndex(null);
+                setSelectedIndex((prev) =>
+                  prev === null
+                    ? 0
+                    : Math.min(prev + 1, searchResults.length - 1)
+                );
+                break;
+              case "Enter":
+                if (searchValue.length === 0) return;
 
-              if (selectedIndex !== null && searchResults.length > 0) {
-                if (searchResults[selectedIndex].Metadata?.ratingKey) {
-                  setSearchParams(
-                    new URLSearchParams({
-                      mid:
-                        searchResults[selectedIndex].Metadata?.ratingKey || "",
-                    })
-                  );
-                } else if (searchResults[selectedIndex].Directory) {
-                  setSearchParams(
-                    new URLSearchParams({
-                      bkey: `/library/sections/${searchResults[selectedIndex].Directory?.librarySectionID}/genre/${searchResults[selectedIndex].Directory?.id}`,
-                    })
-                  );
-                }
-              } else {
-                navigate(`/search/${encodeURIComponent(searchValue.trim())}`);
-              }
-
-              searchAnchorEl?.blur();
-              setSearchAnchorEl(null);
-              break;
-          }
-        }}
-        onChange={(e) => {
-          setSearchValue(e.target.value);
-          //navigate(`/search/${encodeURIComponent(e.target.value.trim())}`);
-        }}
-        onFocus={(e) => {
-          setSearchAnchorEl(e.currentTarget);
-        }}
-        sx={{
-          zIndex: 11000,
-          width: searchOpen
-            ? { xs: "70vw", sm: "260px", md: "320px" }
-            : { xs: "160px", sm: "210px", md: "240px" },
-          transition: "all 0.25s ease",
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 999,
-            backgroundColor: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            "&:hover": {
-              backgroundColor: "rgba(255, 255, 255, 0.12)",
-            },
-            "&.Mui-focused": {
-              backgroundColor: "rgba(255, 255, 255, 0.16)",
-              borderColor: "rgba(255, 255, 255, 0.18)",
-            },
-          },
-          "& .MuiInputAdornment-root svg": {
-            color: "var(--app-ink-muted)",
-          },
-        }}
-      />
-      <Popper
-        anchorEl={searchAnchorEl}
-        open={searchOpen && searchValue.length > 0}
-        placement="bottom-end"
-        sx={{
-          borderRadius: "16px",
-          backgroundColor: "var(--app-surface-2)",
-          border: "1px solid var(--app-border)",
-          backdropFilter: "blur(10px)",
-          transition: "width 0.2s ease-in-out",
-          padding: "20px 10px",
-          pt: "10px",
-
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          width: searchOpen
-            ? { xs: "90vw", sm: "280px", md: "320px" }
-            : { xs: "80vw", sm: "240px", md: "260px" },
-          zIndex: 11000,
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-      >
-        {searchLoading && (
-          <Box
-            sx={{ display: "flex", justifyContent: "center", width: "100%" }}
-          >
-            <CircularProgress />
-          </Box>
-        )}
-
-        {!searchLoading && searchResults.length === 0 && (
-          <Typography>No Results</Typography>
-        )}
-
-        {!searchLoading &&
-          searchResults.length > 0 &&
-          searchResults.map((item, index) => {
-            if (item.Metadata) {
-              return (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "flex-start",
-                    width: "100%",
-                    borderRadius: "12px",
-                    backgroundColor: "rgba(255, 255, 255, 0.06)",
-                    padding: "7px 10px",
-
-                    "&:hover": {
-                      backgroundColor: "rgba(227, 91, 53, 0.2)",
-                      transition: "all 0.2s ease-in-out",
-                    },
-
-                    ...(selectedIndex === index && {
-                      backgroundColor: "rgba(227, 91, 53, 0.2)",
-                    }),
-
-                    transition: "all 0.4s ease-in-out",
-
-                    userSelect: "none",
-                    cursor: "pointer",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    searchAnchorEl?.blur();
-                    setSearchAnchorEl(null);
-                    if (item.Metadata?.ratingKey) {
-                      setSearchParams({
-                        mid: item.Metadata.ratingKey,
-                      });
-                    }
-                  }}
-                >
-                  <img
-                    src={`${getTranscodeImageURL(
-                      item.Metadata.thumb,
-                      100,
-                      100
-                    )}`}
-                    alt=""
-                    style={{
-                      aspectRatio: 1,
-                      objectFit: "cover",
-                      borderRadius: "4px",
-                      width: 50,
-                      height: 50,
-                    }}
-                  />
-
-                  <Box sx={{ ml: 2, display: "flex", flexDirection: "column" }}>
-                    <Typography>{item.Metadata.title}</Typography>
-
-                    <Typography
-                      sx={{
-                        fontSize: 12,
-                        color: "var(--app-ink-muted)",
-                      }}
-                    >
-                      {item.Metadata.librarySectionTitle}
-                    </Typography>
-                  </Box>
-                </Box>
-              );
-            } else if (item.Directory) {
-              return (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "flex-start",
-                    width: "100%",
-                    borderRadius: "12px",
-                    backgroundColor: "rgba(255, 255, 255, 0.06)",
-                    padding: "7px 10px",
-
-                    "&:hover": {
-                      backgroundColor: "rgba(227, 91, 53, 0.2)",
-                      transition: "all 0.2s ease-in-out",
-                    },
-
-                    ...(selectedIndex === index && {
-                      backgroundColor: "rgba(227, 91, 53, 0.2)",
-                    }),
-
-                    transition: "all 0.4s ease-in-out",
-
-                    userSelect: "none",
-                    cursor: "pointer",
-                  }}
-                  onClick={(e) => {
-                    console.log("test");
-                    e.stopPropagation();
-                    e.preventDefault();
+                if (selectedIndex !== null && searchResults.length > 0) {
+                  if (searchResults[selectedIndex].Metadata?.ratingKey) {
                     setSearchParams(
                       new URLSearchParams({
-                        bkey: `/library/sections/${item.Directory?.librarySectionID}/genre/${item.Directory?.id}`,
+                        mid:
+                          searchResults[selectedIndex].Metadata?.ratingKey ||
+                          "",
                       })
                     );
-                    searchAnchorEl?.blur();
-                    setSearchAnchorEl(null);
-                  }}
-                >
-                  <Typography>
-                    {item.Directory.librarySectionTitle} - {item.Directory.tag}
-                  </Typography>
-                </Box>
-              );
+                  } else if (searchResults[selectedIndex].Directory) {
+                    setSearchParams(
+                      new URLSearchParams({
+                        bkey: `/library/sections/${searchResults[selectedIndex].Directory?.librarySectionID}/genre/${searchResults[selectedIndex].Directory?.id}`,
+                      })
+                    );
+                  }
+                } else {
+                  navigate(`/search/${encodeURIComponent(searchValue.trim())}`);
+                }
+
+                searchAnchorEl?.blur();
+                setSearchAnchorEl(null);
+                break;
             }
-            return null;
-          })}
-      </Popper>
-    </>
+          }}
+          onChange={(e) => {
+            setSearchValue(e.target.value);
+            //navigate(`/search/${encodeURIComponent(e.target.value.trim())}`);
+          }}
+          onFocus={(e) => {
+            setSearchAnchorEl(e.currentTarget);
+          }}
+          sx={{
+            zIndex: 11000,
+            width: searchOpen
+              ? { xs: "70vw", sm: "260px", md: "320px" }
+              : { xs: "160px", sm: "210px", md: "240px" },
+            transition: "all 0.25s ease",
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 999,
+              backgroundColor: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.12)",
+              },
+              "&.Mui-focused": {
+                backgroundColor: "rgba(255, 255, 255, 0.16)",
+                borderColor: "rgba(255, 255, 255, 0.18)",
+              },
+            },
+            "& .MuiInputAdornment-root svg": {
+              color: "var(--app-ink-muted)",
+            },
+          }}
+        />
+        <Popper
+          anchorEl={searchAnchorEl}
+          open={searchOpen && searchValue.length > 0}
+          placement="bottom-end"
+          sx={{
+            borderRadius: "16px",
+            backgroundColor: "var(--app-surface-2)",
+            border: "1px solid var(--app-border)",
+            backdropFilter: "blur(10px)",
+            transition: "width 0.2s ease-in-out",
+            padding: "20px 10px",
+            pt: "10px",
+
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            width: searchOpen
+              ? { xs: "90vw", sm: "280px", md: "320px" }
+              : { xs: "80vw", sm: "240px", md: "260px" },
+            zIndex: 11000,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          {searchLoading && (
+            <Box
+              sx={{ display: "flex", justifyContent: "center", width: "100%" }}
+            >
+              <CircularProgress />
+            </Box>
+          )}
+
+          {!searchLoading && searchResults.length === 0 && (
+            <Typography>No Results</Typography>
+          )}
+
+          {!searchLoading &&
+            searchResults.length > 0 &&
+            searchResults.map((item, index) => {
+              if (item.Metadata) {
+                return (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "flex-start",
+                      width: "100%",
+                      borderRadius: "12px",
+                      backgroundColor: "rgba(255, 255, 255, 0.06)",
+                      padding: "7px 10px",
+
+                      "&:hover": {
+                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                        transition: "all 0.2s ease-in-out",
+                      },
+
+                      ...(selectedIndex === index && {
+                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                      }),
+
+                      transition: "all 0.4s ease-in-out",
+
+                      userSelect: "none",
+                      cursor: "pointer",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      searchAnchorEl?.blur();
+                      setSearchAnchorEl(null);
+                      if (item.Metadata?.ratingKey) {
+                        setSearchParams({
+                          mid: item.Metadata.ratingKey,
+                        });
+                      }
+                    }}
+                  >
+                    <img
+                      src={`${getTranscodeImageURL(
+                        item.Metadata.thumb,
+                        100,
+                        100
+                      )}`}
+                      alt=""
+                      style={{
+                        aspectRatio: 1,
+                        objectFit: "cover",
+                        borderRadius: "4px",
+                        width: 50,
+                        height: 50,
+                      }}
+                    />
+
+                    <Box
+                      sx={{ ml: 2, display: "flex", flexDirection: "column" }}
+                    >
+                      <Typography>{item.Metadata.title}</Typography>
+
+                      <Typography
+                        sx={{
+                          fontSize: 12,
+                          color: "var(--app-ink-muted)",
+                        }}
+                      >
+                        {item.Metadata.librarySectionTitle}
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              } else if (item.Directory) {
+                return (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "flex-start",
+                      width: "100%",
+                      borderRadius: "12px",
+                      backgroundColor: "rgba(255, 255, 255, 0.06)",
+                      padding: "7px 10px",
+
+                      "&:hover": {
+                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                        transition: "all 0.2s ease-in-out",
+                      },
+
+                      ...(selectedIndex === index && {
+                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                      }),
+
+                      transition: "all 0.4s ease-in-out",
+
+                      userSelect: "none",
+                      cursor: "pointer",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setSearchParams(
+                        new URLSearchParams({
+                          bkey: `/library/sections/${item.Directory?.librarySectionID}/genre/${item.Directory?.id}`,
+                        })
+                      );
+                      searchAnchorEl?.blur();
+                      setSearchAnchorEl(null);
+                    }}
+                  >
+                    <Typography>
+                      {item.Directory.librarySectionTitle} -{" "}
+                      {item.Directory.tag}
+                    </Typography>
+                  </Box>
+                );
+              }
+              return null;
+            })}
+        </Popper>
+      </Box>
+    </ClickAwayListener>
   );
 }
 
