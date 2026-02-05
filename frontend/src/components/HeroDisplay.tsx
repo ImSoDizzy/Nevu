@@ -63,18 +63,19 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
     <Box
       sx={{
         width: "100%",
-        height: "auto",
+        position: "relative",
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "center",
         justifyContent: "flex-start",
+        pt: 2,
       }}
     >
       <Box
         sx={{
           position: "absolute",
-          right: "1vw",
-          bottom: "20vh",
+          right: { xs: 16, md: 32 },
+          bottom: { xs: 24, md: 32 },
           opacity: previewVidURL ? 1 : 0,
           transition: "all 1s ease",
           zIndex: 2,
@@ -90,7 +91,8 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
       >
         <IconButton
           sx={{
-            backgroundColor: "#00000088",
+            backgroundColor: "var(--app-overlay)",
+            border: "1px solid var(--app-border)",
           }}
           onClick={() => {
             setPreviewVidPlaying(!previewVidPlaying);
@@ -101,7 +103,8 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
 
         <IconButton
           sx={{
-            backgroundColor: "#00000088",
+            backgroundColor: "var(--app-overlay)",
+            border: "1px solid var(--app-border)",
           }}
           onClick={() => {
             setMetaScreenPlayerMuted(!MetaScreenPlayerMuted);
@@ -114,12 +117,13 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
       <Box
         sx={{
           width: "100%",
-          height: "100vh",
+          minHeight: { xs: "65vh", md: "72vh" },
+          height: "auto",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          background: `linear-gradient(90deg, #000000AA, #000000AA), url(${getTranscodeImageURL(
+          background: `linear-gradient(120deg, rgba(16, 9, 6, 0.85) 0%, rgba(16, 9, 6, 0.4) 55%, rgba(16, 9, 6, 0.15) 100%), url(${getTranscodeImageURL(
             item?.art,
             1920,
             1080
@@ -129,6 +133,11 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           backgroundRepeat: "no-repeat",
           zIndex: 0,
           position: "relative",
+          margin: "0 auto",
+          borderRadius: "var(--app-radius-lg)",
+          overflow: "hidden",
+          border: "1px solid var(--app-border)",
+          boxShadow: "var(--app-shadow)",
         }}
       >
         <Box
@@ -136,14 +145,13 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
             position: "absolute",
             // make it take up the full width of the parent
             width: "100%",
-            height: "100vh",
-            aspectRatio: "16/9",
+            height: "100%",
             left: 0,
             top: 0,
-            filter: "brightness(0.5)",
+            filter: "brightness(0.7) saturate(1.05)",
             opacity: previewVidPlaying ? 1 : 0,
             transition: "all 2s ease",
-            backgroundColor: previewVidPlaying ? "#000000" : "transparent",
+            backgroundColor: previewVidPlaying ? "rgba(0, 0, 0, 0.6)" : "transparent",
             pointerEvents: "none",
 
             overflow: "hidden",
@@ -182,9 +190,11 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
 
         <Box
           sx={{
-            ml: 10,
-            mb: "40vh",
+            px: { xs: 3, md: 6 },
+            pb: { xs: 5, md: 7 },
+            pt: { xs: 6, md: 10 },
             zIndex: 1,
+            maxWidth: { xs: "100%", md: "55%" },
           }}
         >
           <Box
@@ -207,10 +217,10 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
             /> */}
             <Typography
               sx={{
-                fontSize: "24px",
-                fontWeight: "900",
-                letterSpacing: "0.1em",
-                color: (theme) => theme.palette.primary.main,
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                letterSpacing: "0.38em",
+                color: "var(--app-ink-muted)",
                 textTransform: "uppercase",
               }}
             >
@@ -219,17 +229,20 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           </Box>
           <Typography
             sx={{
-              fontSize: "3rem",
-              fontWeight: "bold",
+              fontSize: { xs: "2.2rem", md: "3.5rem" },
+              fontWeight: 700,
+              lineHeight: 1.05,
+              textShadow: "0 12px 30px rgba(5, 2, 1, 0.6)",
             }}
           >
             {item.title}
           </Typography>
           <Typography
             sx={{
-              fontSize: "medium",
-              fontWeight: "light",
-              maxWidth: "35vw",
+              fontSize: { xs: "0.95rem", md: "1.05rem" },
+              fontWeight: 400,
+              color: "var(--app-ink-muted)",
+              maxWidth: { xs: "100%", md: "32vw" },
 
               // make the text max 4 lines long and add ellipsis
               display: "-webkit-box",
@@ -254,20 +267,20 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "flex-start",
-              mt: 4,
-              gap: 2,
+              mt: { xs: 3, md: 4 },
+              gap: 1.5,
               ml: 0,
-              height: "36.5px",
+              flexWrap: "wrap",
             }}
           >
             <Button
               variant="contained"
               sx={{
-                fontWeight: "bold",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                gap: "10px",
-                transition: "all 0.2s ease-in-out",
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "none",
+                gap: 1,
+                px: 3,
               }}
               onClick={() => {
                 if (!item) return;
@@ -278,12 +291,17 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
             </Button>
 
             <Button
-              variant="contained"
+              variant="outlined"
               sx={{
-                fontWeight: "bold",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                textTransform: "none",
+                borderColor: "rgba(255, 255, 255, 0.2)",
+                color: "var(--app-ink)",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
                 "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.12)",
+                  borderColor: "rgba(255, 255, 255, 0.35)",
                   "& > *:nth-child(2)": {
                     width: "91px",
                     ml: "10px",
@@ -301,19 +319,20 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
               }}
             >
               <InfoOutlined fontSize="medium" />{" "}
-              <Typography
-                sx={{
-                  width: "0px",
-                  userSelect: "none",
-                  display: "inline",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  transition: "all 0.2s ease-in-out",
+                <Typography
+                  sx={{
+                    width: "0px",
+                    userSelect: "none",
+                    display: "inline",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    transition: "all 0.2s ease-in-out",
 
-                  fontSize: "0.875rem",
-                  lineHeight: "1.75",
-                }}
-              >
+                    fontSize: "0.9rem",
+                    lineHeight: "1.75",
+                    color: "var(--app-ink)",
+                  }}
+                >
                 More Info
               </Typography>
             </Button>
@@ -325,17 +344,20 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
       <Box
         sx={{
           width: "100%",
-          height: "40vh",
+          height: "35vh",
           position: "absolute",
-          top: "65vh",
+          top: "60%",
+          left: 0,
+          right: 0,
 
           backgroundImage:
-            "linear-gradient(180deg, #00000000, #000000AA, #000000FF)",
+            "linear-gradient(180deg, rgba(20, 10, 6, 0) 0%, rgba(20, 10, 6, 0.65) 55%, rgba(20, 10, 6, 1) 100%)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           backgroundColor: "transparent",
           zIndex: 1,
+          pointerEvents: "none",
         }}
       />
     </Box>

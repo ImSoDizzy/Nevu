@@ -170,7 +170,10 @@ export function Toast({
         width: "300px",
         height: "75px",
 
-        background: "#121212",
+        background: "var(--app-surface-2)",
+        border: "1px solid var(--app-border)",
+        borderRadius: "16px",
+        boxShadow: "0 18px 35px rgba(8, 4, 2, 0.45)",
 
         display: "flex",
         flexDirection: "row",
@@ -272,7 +275,7 @@ export function Toast({
 
               fontSize: "1rem",
               fontWeight: "bold",
-              fontFamily: '"Montserrat Variable", sans-serif',
+              fontFamily: '"Rubik Variable", "Rubik", sans-serif',
             }}
           >
             {user.name}

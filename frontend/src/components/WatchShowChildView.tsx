@@ -130,7 +130,7 @@ function WatchShowChildView({
                 <Paper
                   sx={{
                     overflow: "hidden",
-                    bgcolor: "#000",
+                    bgcolor: "var(--app-surface)",
                     border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
                     userSelect: "none",
                   }}
@@ -141,7 +141,7 @@ function WatchShowChildView({
                       borderRadius: 1,
                       maxHeight: "70vh",
                       maxWidth: "90vw",
-                      backgroundColor: "#00000088",
+                      backgroundColor: "var(--app-overlay)",
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -307,7 +307,10 @@ function WatchShowChildView({
                                     color: "white",
                                     opacity: 0,
                                     transition: "opacity 0.2s",
-                                    backgroundColor: alpha("#000", 0.5),
+                                    backgroundColor: alpha(
+                                      theme.palette.background.default,
+                                      0.5
+                                    ),
                                     borderRadius: "50%",
                                   }}
                                 />
@@ -330,7 +333,10 @@ function WatchShowChildView({
                                       left: 0,
                                       right: 0,
                                       height: 3,
-                                      bgcolor: alpha("#000", 0.5),
+                                      bgcolor: alpha(
+                                        theme.palette.background.default,
+                                        0.5
+                                      ),
                                     }}
                                   />
                                 )}

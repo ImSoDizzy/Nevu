@@ -27,28 +27,32 @@ function Settings() {
 
   return (
     <Box
+      className="app-page"
       sx={{
         display: "flex",
         flexDirection: "row",
         alignItems: "flex-start",
         justifyContent: "flex-start",
-        height: "100vh",
-        width: "100vw",
+        minHeight: "100vh",
+        width: "100%",
         overflow: "auto",
-        pt: "64px",
-        px: "20px",
-        pb: "20px",
+        pt: 0,
+        px: 0,
+        pb: 0,
+        gap: 3,
       }}
     >
       <Box
         sx={{
-          width: "300px",
+          width: "280px",
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#181818",
-          padding: "10px",
-          borderRadius: "10px",
+          backgroundColor: "var(--app-surface)",
+          padding: "14px",
+          borderRadius: "18px",
+          border: "1px solid var(--app-border)",
+          boxShadow: "0 18px 35px rgba(8, 4, 2, 0.35)",
         }}
       >
         <SettingsDivider title="General" />
@@ -61,15 +65,17 @@ function Settings() {
 
       <Box
         sx={{
-          width: "50vw",
+          width: "min(720px, 100%)",
           height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-start",
-          backgroundColor: "#18181855",
-          padding: "20px",
-          borderRadius: "10px",
+          backgroundColor: "var(--app-surface-2)",
+          padding: "24px",
+          borderRadius: "18px",
+          border: "1px solid var(--app-border)",
+          boxShadow: "0 18px 35px rgba(8, 4, 2, 0.35)",
           ml: "auto",
           mr: "auto",
         }}
@@ -103,8 +109,10 @@ function SettingsDivider({ title }: { title: string }) {
     >
       <Typography
         sx={{
-          color: "#AAA",
-          fontSize: "1.2rem",
+          color: "var(--app-ink-muted)",
+          fontSize: "0.95rem",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
           userSelect: "none",
         }}
       >
@@ -133,7 +141,7 @@ function SettingsItem({ title, link }: { title: string; link: string }) {
           transition: "all 0.3s ease",
 
           "&:hover": {
-            backgroundColor: "#333",
+            backgroundColor: "rgba(255, 255, 255, 0.08)",
           },
         }}
       >

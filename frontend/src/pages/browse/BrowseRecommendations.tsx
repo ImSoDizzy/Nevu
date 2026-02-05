@@ -223,12 +223,12 @@ function BrowseRecommendations() {
       <Box
         sx={{
           zIndex: 1,
-          mt: "-20vh",
+          mt: "-8vh",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-start",
-          gap: 8,
+          gap: 6,
         }}
       >
         {categories &&

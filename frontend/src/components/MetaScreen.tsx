@@ -287,7 +287,7 @@ function MetaScreen() {
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-start",
-          backgroundColor: "#121216",
+          backgroundColor: "var(--app-surface)",
           mt: 4,
           pb: "40vh",
 
@@ -311,7 +311,7 @@ function MetaScreen() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            backgroundColor: "#000000AA",
+            backgroundColor: "var(--app-overlay)",
             backgroundBlendMode: "darken",
 
             display: "flex",
@@ -337,7 +337,9 @@ function MetaScreen() {
               filter: "brightness(0.5)",
               opacity: previewVidPlaying ? 1 : 0,
               transition: "all 2s ease",
-              backgroundColor: previewVidPlaying ? "#000000" : "transparent",
+              backgroundColor: previewVidPlaying
+                ? "var(--app-overlay-strong)"
+                : "transparent",
               pointerEvents: "none",
 
               borderTopLeftRadius: "10px",
@@ -377,7 +379,7 @@ function MetaScreen() {
           >
             <IconButton
               sx={{
-                backgroundColor: "#00000088",
+                backgroundColor: "var(--app-overlay)",
               }}
               onClick={() => {
                 setSearchParams(new URLSearchParams());
@@ -388,7 +390,7 @@ function MetaScreen() {
 
             <IconButton
               sx={{
-                backgroundColor: "#00000088",
+                backgroundColor: "var(--app-overlay)",
                 opacity: previewVidURL ? 1 : 0,
                 transition: "all 1s ease",
               }}
@@ -411,7 +413,7 @@ function MetaScreen() {
             height: "30vh",
             width: "100%",
             background:
-              "linear-gradient(180deg, #12121600, #121216FF, #121216FF)",
+              "linear-gradient(180deg, rgba(20, 10, 6, 0), rgba(20, 10, 6, 0.92), rgba(20, 10, 6, 1))",
             zIndex: 1,
           }}
         />
@@ -451,7 +453,7 @@ function MetaScreen() {
               style={{
                 width: "100%",
                 aspectRatio: "2/3",
-                backgroundColor: "#00000088",
+                backgroundColor: "var(--app-overlay)",
                 objectFit: "cover",
                 display: "block",
               }}
@@ -1276,7 +1278,7 @@ function MetaPage2(data: Plex.Metadata | undefined) {
             sx={{
               fontSize: "1.5rem",
               fontWeight: "bold",
-              color: "#FFFFFF",
+              color: "var(--app-ink)",
             }}
           >
             {hub.title}
@@ -1328,7 +1330,7 @@ function MetaPage3(data: Plex.Metadata | undefined) {
           sx={{
             fontSize: "1.5rem",
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: "var(--app-ink)",
           }}
         >
           Cast
@@ -2146,11 +2148,11 @@ function EpisodeItem({
         >
           <PlayArrowRounded
             sx={{
-              color: "#FFFFFF",
+              color: "var(--app-ink)",
               fontSize: "400%",
               m: "auto",
               opacity: 0,
-              backgroundColor: "#00000088",
+              backgroundColor: "var(--app-overlay)",
               borderRadius: "50%",
               transition: "all 0.3s ease-out",
             }}

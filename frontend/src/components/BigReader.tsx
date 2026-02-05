@@ -33,9 +33,11 @@ function BigReader() {
           justifyContent: "flex-start",
           width: "600px",
           maxheight: "500px",
-          backgroundColor: "#171717",
+          backgroundColor: "var(--app-surface)",
+          border: "1px solid var(--app-border)",
           padding: "20px",
-          borderRadius: "10px",
+          borderRadius: "18px",
+          boxShadow: "0 22px 45px rgba(8, 4, 2, 0.5)",
           overflowY: "auto",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -44,7 +46,7 @@ function BigReader() {
           sx={{
             fontSize: "1rem",
             fontWeight: "light",
-            color: "white",
+            color: "var(--app-ink)",
             mb: "10px",
             whiteSpace: "pre-wrap",
           }}

@@ -26,12 +26,14 @@ function Library() {
 
   return (
     <Box
+      className="app-page"
       sx={{
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-start",
         justifyContent: "flex-start",
         width: "100%",
+        position: "relative",
       }}
     >
       <ButtonGroup
@@ -39,11 +41,11 @@ function Library() {
         sx={{
           zIndex: 5,
           mb: 2,
-          right: "48px",
-          top: "64px",
+          right: { xs: 0, md: 0 },
+          top: { xs: 16, md: 16 },
           position: "absolute",
-          opacity: 0.7,
-          filter: "brightness(0.7)",
+          opacity: 0.9,
+          filter: "brightness(0.9)",
 
           "&:hover": {
             opacity: 1,
@@ -56,10 +58,11 @@ function Library() {
         <Button
           variant={page === "recommendations" ? "contained" : "outlined"}
           sx={{
-            fontWeight: "bold",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            gap: "10px",
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "none",
+            gap: "8px",
+            px: 2.5,
             transition: "all 0.2s ease-in-out",
           }}
           onClick={() => setPage("recommendations")}
@@ -69,10 +72,11 @@ function Library() {
         <Button
           variant={page === "browse" ? "contained" : "outlined"}
           sx={{
-            fontWeight: "bold",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            gap: "10px",
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "none",
+            gap: "8px",
+            px: 2.5,
             transition: "all 0.2s ease-in-out",
           }}
           onClick={() => setPage("browse")}

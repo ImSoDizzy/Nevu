@@ -55,9 +55,11 @@ function PerPlexedSync() {
         sx={{
           width: "500px",
           height: "auto",
-          backgroundColor: "#202020",
+          backgroundColor: "var(--app-surface)",
+          border: "1px solid var(--app-border)",
           padding: "20px",
-          borderRadius: "10px",
+          borderRadius: "18px",
+          boxShadow: "0 22px 45px rgba(8, 4, 2, 0.5)",
 
           display: "flex",
           flexDirection: "column",
@@ -69,7 +71,7 @@ function PerPlexedSync() {
       >
         <Typography
           sx={{
-            color: "white",
+            color: "var(--app-ink)",
             fontSize: "24px",
             fontWeight: "bold",
           }}

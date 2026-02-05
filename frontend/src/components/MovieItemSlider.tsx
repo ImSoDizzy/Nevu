@@ -46,6 +46,10 @@ function MovieItemSlider({
   const [itemsPerPage, setItemsPerPage] = React.useState(
     calculateItemsPerPage(window.innerWidth)
   );
+  const trackRef = React.useRef<HTMLDivElement | null>(null);
+  const [trackWidth, setTrackWidth] = React.useState(0);
+  const itemGap = 16;
+  const edgeWidth = 56;
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -53,6 +57,17 @@ function MovieItemSlider({
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  React.useEffect(() => {
+    if (!trackRef.current) return;
+    const element = trackRef.current;
+    const observer = new ResizeObserver((entries) => {
+      if (!entries[0]) return;
+      setTrackWidth(entries[0].contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
 
   const fetchData = async () => {
@@ -80,17 +95,22 @@ function MovieItemSlider({
   if (!items) return <></>;
 
   const itemCount = items.slice(0, itemsPerPage * 5).length;
+  const visibleWidth = Math.max(trackWidth - edgeWidth * 2, 0);
+  const itemWidth =
+    itemsPerPage && visibleWidth
+      ? (visibleWidth - itemGap * (itemsPerPage - 1)) / itemsPerPage
+      : undefined;
 
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        alignItems: "stretch",
+        justifyContent: "flex-start",
         width: "100%",
         height: "auto",
-        gap: "10px",
+        gap: "12px",
       }}
     >
       <Box
@@ -101,7 +121,7 @@ function MovieItemSlider({
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          px: "2.5vw",
+          px: 0,
         }}
       >
         <Box
@@ -135,8 +155,9 @@ function MovieItemSlider({
           <Typography
             variant="h4"
             sx={{
-              fontSize: "2rem",
-              fontWeight: "bold",
+              fontSize: { xs: "1.4rem", md: "1.9rem" },
+              fontWeight: 700,
+              letterSpacing: "0.02em",
               mb: "0px",
             }}
           >
@@ -154,10 +175,12 @@ function MovieItemSlider({
                 opacity: 0,
                 gap: "0px",
                 transition: "all 0.5s ease",
-                color: "primary.main",
+                color: "var(--app-ink-muted)",
               }}
             >
-              <Typography sx={{ fontSize: "1rem" }}>Browse</Typography>
+              <Typography sx={{ fontSize: "0.95rem", fontWeight: 600 }}>
+                Browse
+              </Typography>
               <ArrowForwardIosRounded fontSize="small" />
             </Box>
           )}
@@ -178,9 +201,13 @@ function MovieItemSlider({
               return (
                 <Box
                   sx={{
-                    width: "10px",
-                    height: "4px",
-                    backgroundColor: i === currPage ? "#FFFFFF" : "#FFFFFF55",
+                    width: "18px",
+                    height: "3px",
+                    borderRadius: "999px",
+                    backgroundColor:
+                      i === currPage
+                        ? "var(--app-nav-pill)"
+                        : "rgba(255,255,255,0.25)",
                     transition: "all 0.5s ease",
                     mx: "2px",
                     cursor: "pointer",
@@ -194,28 +221,34 @@ function MovieItemSlider({
         </Box>
       </Box>
       <Box
+        ref={trackRef}
         sx={{
-          width: "100vw",
+          width: "100%",
           height: "auto",
           display: "flex",
           justifyContent: "flex-start",
           alignItems: "center",
 
-          py: "10px",
+          py: 1.5,
           whiteSpace: "nowrap",
           // clipPath: "inset(0px 0px -10px 0px)",
-          overflowX: "clip",
+          overflowX: "hidden",
           overflowY: "visible",
           position: "relative",
         }}
       >
         <Box
           sx={{
-            width: "calc(2.5vw)",
-            height: "16vh",
+            width: `${edgeWidth}px`,
+            height: "100%",
             position: "absolute",
             left: "0px",
-            backgroundColor: "#00000022",
+            top: 0,
+            bottom: 0,
+            backgroundColor: "rgba(20, 10, 6, 0.35)",
+            backdropFilter: "blur(8px)",
+            borderTopLeftRadius: "14px",
+            borderBottomLeftRadius: "14px",
             zIndex: 2,
             display: "flex",
             alignItems: "center",
@@ -224,7 +257,7 @@ function MovieItemSlider({
             visibility: itemCount > itemsPerPage ? "visible" : "hidden",
 
             "&:hover": {
-              backgroundColor: "#000000AA",
+              backgroundColor: "rgba(20, 10, 6, 0.65)",
             },
 
             transition: "all 0.5s ease",
@@ -248,12 +281,12 @@ function MovieItemSlider({
           sx={{
             display: "flex",
             flexDirection: "row",
-            transform: `translateX(calc((-${currPage} * (100vw - 5vw) + 2.5vw)))`,
+            transform: `translateX(${edgeWidth - currPage * visibleWidth}px)`,
             alignItems: "flex-start",
             justifyContent: "center",
-            width: `auto`,
-            gap: "10px",
-            transition: "transform 1s ease",
+            width: "max-content",
+            gap: `${itemGap}px`,
+            transition: "transform 0.8s ease",
           }}
         >
           {items?.slice(0, itemsPerPage * 5).map((item, i) => {
@@ -266,6 +299,7 @@ function MovieItemSlider({
                   key={item.ratingKey}
                   item={item}
                   itemsPerPage={itemsPerPage}
+                  itemWidth={itemWidth}
                   index={i}
                   PlexTvSource={plexTvSource}
                   refetchData={
@@ -277,8 +311,10 @@ function MovieItemSlider({
               return (
                 <Box
                   style={{
-                    width: `calc((100vw - 5vw) / ${itemsPerPage} - 10px)`,
-                    backgroundColor: "#1C1C1C",
+                    width: itemWidth ? `${itemWidth}px` : "200px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "16px",
+                    border: "1px solid var(--app-border)",
                   }}
                   key={i}
                 >
@@ -293,11 +329,16 @@ function MovieItemSlider({
         </Box>
         <Box
           sx={{
-            width: "calc(2.5vw)",
-            height: "16vh",
+            width: `${edgeWidth}px`,
+            height: "100%",
             position: "absolute",
             right: "0px",
-            backgroundColor: "#00000022",
+            top: 0,
+            bottom: 0,
+            backgroundColor: "rgba(20, 10, 6, 0.35)",
+            backdropFilter: "blur(8px)",
+            borderTopRightRadius: "14px",
+            borderBottomRightRadius: "14px",
             zIndex: 2,
             display: "flex",
             alignItems: "center",
@@ -306,7 +347,7 @@ function MovieItemSlider({
             visibility: itemCount > itemsPerPage ? "visible" : "hidden",
 
             "&:hover": {
-              backgroundColor: "#000000AA",
+              backgroundColor: "rgba(20, 10, 6, 0.65)",
             },
 
             transition: "all 0.5s ease",

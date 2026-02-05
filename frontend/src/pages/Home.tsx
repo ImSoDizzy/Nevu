@@ -89,31 +89,31 @@ export default function Home() {
 
   return (
     <Box
+      className="app-page"
       sx={{
         width: "100%",
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "stretch",
         justifyContent: "flex-start",
-
-        pt: "-64px",
+        pt: 0,
       }}
     >
       {randomItem && <HeroDisplay item={randomItem} />}
       <Box
+        className="app-section"
         sx={{
           width: "100%",
           display: "flex",
-          gap: 6,
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-start",
           pb: 8,
-          mt: randomItem ? "-20vh" : "80px",
+          mt: randomItem ? "-8vh" : 6,
           zIndex: 1,
         }}
       >
-        <Grid container spacing={2} sx={{ px: "2.5vw", mt: 2, width: "100%" }}>
+        <Grid container spacing={2} sx={{ px: 0, mt: 1, width: "100%" }}>
           {libraries
             ?.filter((e) => ["movie", "show"].includes(e.type || ""))
             .map((library) => (
@@ -132,16 +132,18 @@ export default function Home() {
                         : "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    borderRadius: "7px",
+                    borderRadius: "16px",
                     position: "relative",
                     overflow: "hidden",
                     cursor: "pointer",
-                    boxShadow: (theme) => theme.shadows[1],
-                    transition: "all 0.2s ease",
+                    border: "1px solid var(--app-border)",
+                    boxShadow: "0 12px 30px rgba(8, 4, 2, 0.4)",
+                    transition: "all 0.3s ease",
 
                     "&:hover": {
-                      transform: "translateY(-4px) scale(1.02)",
-                      boxShadow: (theme) => theme.shadows[3],
+                      transform: "translateY(-6px) scale(1.02)",
+                      boxShadow: "0 18px 36px rgba(8, 4, 2, 0.55)",
+                      borderColor: "var(--app-border-strong)",
                     },
                   }}
                   onClick={() => navigate(`/browse/${library.key}`)}
@@ -174,10 +176,9 @@ export default function Home() {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      background: (theme) => `linear-gradient(180deg, 
-                        ${theme.palette.primary.dark}99, 
-                        ${theme.palette.background.default}EE)`,
-                      opacity: 0.85,
+                      background:
+                        "linear-gradient(180deg, rgba(24, 12, 7, 0.7), rgba(20, 10, 6, 0.95))",
+                      opacity: 0.9,
                       zIndex: -1,
                       transition: "opacity 0.2s ease",
                     }}
@@ -199,15 +200,15 @@ export default function Home() {
                       sx={{
                         width: 48,
                         height: 48,
-                        boxShadow: (theme) => theme.shadows[2],
+                        boxShadow: "0 8px 16px rgba(8, 4, 2, 0.45)",
                       }}
                     />
                     <Typography
                       variant="h6"
                       sx={{
                         fontWeight: 600,
-                        color: "common.white",
-                        textShadow: "0px 1px 3px rgba(0,0,0,0.3)",
+                        color: "var(--app-ink)",
+                        textShadow: "0px 4px 12px rgba(5, 2, 1, 0.55)",
                       }}
                     >
                       {library.title}

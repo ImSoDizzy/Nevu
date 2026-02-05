@@ -125,21 +125,23 @@ function BrowseLibrary() {
         justifyContent: "flex-start",
         width: "100%",
         height: "fit-content",
-        minHeight: "calc(100vh - 64px)",
-        mt: "64px",
+        minHeight: "100%",
+        mt: 0,
       }}
     >
       <Box
         sx={{
           zIndex: 10,
-          left: "48px",
-          top: "64px",
-          position: "absolute",
+          left: 0,
+          top: 0,
+          position: "sticky",
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "flex-start",
           gap: 2,
+          py: 1,
+          background: "linear-gradient(180deg, rgba(20, 10, 6, 0.85), rgba(20, 10, 6, 0))",
         }}
       >
         <Select
@@ -229,8 +231,8 @@ function BrowseLibrary() {
           justifyContent: "flex-start",
           width: "100%",
           height: "fit-content",
-          px: 6,
-          pt: "46px",
+          px: 0,
+          pt: 2,
           pb: 2,
         }}
       >
@@ -253,7 +255,7 @@ function BrowseLibrary() {
                         width: "100%",
                         height: "auto",
                         aspectRatio: "16/9",
-                        borderRadius: "10px",
+                        borderRadius: "16px",
                       }}
                     />
                   </Grid>

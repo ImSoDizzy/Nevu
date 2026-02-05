@@ -106,6 +106,7 @@ function LibraryScreen() {
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1200,
+          backgroundColor: "var(--app-overlay)",
         }}
         onClick={() => {
           searchParams.delete("bkey");
@@ -126,6 +127,7 @@ function LibraryScreen() {
           alignItems: "flex-start",
           justifyContent: "center",
           zIndex: 1200,
+          backgroundColor: "var(--app-overlay)",
         }}
         onClick={() => {
           searchParams.delete("bkey");
@@ -139,7 +141,8 @@ function LibraryScreen() {
             flexDirection: "column",
             alignItems: "flex-start",
             justifyContent: "flex-start",
-            backgroundColor: "#181818",
+            backgroundColor: "var(--app-surface)",
+            border: "1px solid var(--app-border)",
             mt: 4,
             padding: "20px",
 
@@ -147,7 +150,8 @@ function LibraryScreen() {
               pb: "10vh",
             }),
 
-            borderRadius: "10px",
+            borderRadius: "18px",
+            boxShadow: "0 20px 45px rgba(8, 4, 2, 0.45)",
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -174,7 +178,7 @@ function LibraryScreen() {
           >
             <Typography
               sx={{
-                color: "#fff",
+                color: "var(--app-ink)",
                 fontSize: "2rem",
                 fontWeight: "bold",
               }}

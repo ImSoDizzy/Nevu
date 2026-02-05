@@ -11,8 +11,9 @@ function SettingsRecommendations() {
           mt: 2,
           width: "100%",
           height: "40px",
-          backgroundColor: "#181818",
-          borderRadius: "10px",
+          backgroundColor: "var(--app-surface-3)",
+          borderRadius: "14px",
+          border: "1px solid var(--app-border)",
         }}
       />
 

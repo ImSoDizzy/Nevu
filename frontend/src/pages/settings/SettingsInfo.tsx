@@ -33,7 +33,8 @@ function SettingsInfo() {
         sx={{
           p: 4,
           borderRadius: 2,
-          bgcolor: "rgba(18, 18, 22, 0.9)",
+          bgcolor: "var(--app-surface)",
+          border: "1px solid var(--app-border)",
           color: "text.primary",
         }}
       >
@@ -49,7 +50,7 @@ function SettingsInfo() {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              color: "#6366F1",
+              color: "var(--app-accent)",
               textDecoration: "none",
               fontWeight: "bold",
             }}
@@ -96,9 +97,9 @@ function SettingsInfo() {
           sx={{
             mt: 5,
             p: 3,
-            bgcolor: "rgba(99, 102, 241, 0.08)",
+            bgcolor: "rgba(255, 218, 180, 0.08)",
             borderRadius: 2,
-            border: "1px solid rgba(99, 102, 241, 0.2)",
+            border: "1px solid rgba(255, 218, 180, 0.2)",
             textAlign: "center",
           }}
         >

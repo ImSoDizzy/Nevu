@@ -48,7 +48,6 @@ const BarSide: SxProps<Theme> = {
   display: "flex",
   flexDirection: "row",
   alignItems: "center",
-  justifyContent: "center",
   height: "100%",
 };
 
@@ -97,24 +96,13 @@ function Appbar() {
     <AppBar
       sx={{
         position: "fixed",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        px: 6,
-        py: 0,
-        height: 64,
-        transition: "all 0.5s ease-in-out",
-
-        bgcolor: (theme) => (scrollAtTop ? "#00000000" : theme.palette.background.default + "88"),
-        backdropFilter: scrollAtTop ? "blur(0px)" : "blur(20px)",
-        boxShadow: scrollAtTop ? "none" : "0px 0px 10px 0px #000000AA",
-
-        borderRadius: "0px",
+        top: { xs: 12, md: 18 },
+        left: { xs: 12, md: 24 },
+        right: { xs: 12, md: 24 },
+        width: "auto",
+        background: "transparent",
+        boxShadow: "none",
         border: "none",
-
-        borderBottomLeftRadius: "4px",
-        borderBottomRightRadius: "4px",
         zIndex: 99,
       }}
     >
@@ -238,6 +226,29 @@ S - Skip onscreen markers (intro, credits, etc)
 
       <Box
         sx={{
+          width: "100%",
+          maxWidth: "1400px",
+          mx: "auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          px: { xs: 2, md: 3 },
+          py: 1.25,
+          borderRadius: "var(--app-radius-lg)",
+          background: scrollAtTop
+            ? "linear-gradient(135deg, rgba(60, 30, 18, 0.72), rgba(24, 12, 7, 0.65))"
+            : "linear-gradient(135deg, rgba(60, 30, 18, 0.92), rgba(24, 12, 7, 0.92))",
+          border: "1px solid var(--app-border)",
+          boxShadow: scrollAtTop
+            ? "0 18px 45px rgba(6, 3, 2, 0.35)"
+            : "0 24px 60px rgba(6, 3, 2, 0.55)",
+          backdropFilter: "blur(18px)",
+          transition: "all 0.3s ease",
+        }}
+      >
+      <Box
+        sx={{
           justifyContent: "flex-start",
           ...BarSide,
         }}
@@ -245,9 +256,11 @@ S - Skip onscreen markers (intro, credits, etc)
         <img
           src="/logo.png"
           alt=""
-          width="100"
           style={{
+            height: 32,
+            width: "auto",
             objectFit: "contain",
+            filter: "drop-shadow(0 6px 14px rgba(6, 3, 2, 0.4))",
           }}
         />
 
@@ -257,9 +270,10 @@ S - Skip onscreen markers (intro, credits, etc)
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "flex-start",
-            gap: 4,
-            ml: 6,
+            gap: 1.5,
+            ml: { xs: 2, md: 3 },
             height: "100%",
+            flexWrap: "nowrap",
           }}
         >
           <HeadLink to="/" active={location.pathname === "/"}>
@@ -319,9 +333,9 @@ S - Skip onscreen markers (intro, credits, etc)
           alt=""
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
-            width: 45,
-            height: 45,
-            borderRadius: "4px",
+            width: 40,
+            height: 40,
+            borderRadius: "12px",
             cursor: "pointer",
 
             "&:hover": {
@@ -331,6 +345,7 @@ S - Skip onscreen markers (intro, credits, etc)
             transition: "all 0.2s ease-in-out",
           }}
         />
+      </Box>
       </Box>
     </AppBar>
   );
@@ -428,6 +443,7 @@ function SearchBar() {
         open={searchOpen}
         sx={{
           zIndex: 10000,
+          backgroundColor: "var(--app-overlay)",
         }}
         onClick={() => {
           setSearchAnchorEl(null);
@@ -512,14 +528,26 @@ function SearchBar() {
           setSearchAnchorEl(e.currentTarget);
         }}
         sx={{
-          backgroundColor: "#121212AA",
-          transition: "all 0.2s ease-in-out",
           zIndex: 11000,
-        }}
-        style={{
-          ...(searchOpen
-            ? { width: "20vw", zIndex: 10000 }
-            : { width: "300px" }),
+          width: searchOpen
+            ? { xs: "70vw", sm: "260px", md: "320px" }
+            : { xs: "160px", sm: "210px", md: "240px" },
+          transition: "all 0.25s ease",
+          "& .MuiOutlinedInput-root": {
+            borderRadius: 999,
+            backgroundColor: "rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            "&:hover": {
+              backgroundColor: "rgba(255, 255, 255, 0.12)",
+            },
+            "&.Mui-focused": {
+              backgroundColor: "rgba(255, 255, 255, 0.16)",
+              borderColor: "rgba(255, 255, 255, 0.18)",
+            },
+          },
+          "& .MuiInputAdornment-root svg": {
+            color: "var(--app-ink-muted)",
+          },
         }}
       />
       <Popper
@@ -527,8 +555,9 @@ function SearchBar() {
         open={searchOpen && searchValue.length > 0}
         placement="bottom-end"
         sx={{
-          borderRadius: "4px",
-          backgroundColor: "#121212AA",
+          borderRadius: "16px",
+          backgroundColor: "var(--app-surface-2)",
+          border: "1px solid var(--app-border)",
           backdropFilter: "blur(10px)",
           transition: "width 0.2s ease-in-out",
           padding: "20px 10px",
@@ -537,11 +566,10 @@ function SearchBar() {
           display: "flex",
           flexDirection: "column",
           gap: "10px",
-        }}
-        style={{
-          ...(searchOpen
-            ? { width: "20vw", zIndex: 11000 }
-            : { width: "300px" }),
+          width: searchOpen
+            ? { xs: "90vw", sm: "280px", md: "320px" }
+            : { xs: "80vw", sm: "240px", md: "260px" },
+          zIndex: 11000,
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -571,17 +599,17 @@ function SearchBar() {
                     alignItems: "flex-start",
                     justifyContent: "flex-start",
                     width: "100%",
-                    borderRadius: "4px",
-                    backgroundColor: (theme) => theme.palette.background.paper,
+                    borderRadius: "12px",
+                    backgroundColor: "rgba(255, 255, 255, 0.06)",
                     padding: "7px 10px",
 
                     "&:hover": {
-                      backgroundColor: (theme) => theme.palette.primary.dark,
+                      backgroundColor: "rgba(227, 91, 53, 0.2)",
                       transition: "all 0.2s ease-in-out",
                     },
 
                     ...(selectedIndex === index && {
-                      backgroundColor: (theme) => theme.palette.primary.dark,
+                      backgroundColor: "rgba(227, 91, 53, 0.2)",
                     }),
 
                     transition: "all 0.4s ease-in-out",
@@ -623,7 +651,7 @@ function SearchBar() {
                     <Typography
                       sx={{
                         fontSize: 12,
-                        color: "#777",
+                        color: "var(--app-ink-muted)",
                       }}
                     >
                       {item.Metadata.librarySectionTitle}
@@ -639,17 +667,17 @@ function SearchBar() {
                     alignItems: "flex-start",
                     justifyContent: "flex-start",
                     width: "100%",
-                    borderRadius: "4px",
-                    backgroundColor: (theme) => theme.palette.background.paper,
+                    borderRadius: "12px",
+                    backgroundColor: "rgba(255, 255, 255, 0.06)",
                     padding: "7px 10px",
 
                     "&:hover": {
-                      backgroundColor: (theme) => theme.palette.primary.dark,
+                      backgroundColor: "rgba(227, 91, 53, 0.2)",
                       transition: "all 0.2s ease-in-out",
                     },
 
                     ...(selectedIndex === index && {
-                      backgroundColor: (theme) => theme.palette.primary.dark,
+                      backgroundColor: "rgba(227, 91, 53, 0.2)",
                     }),
 
                     transition: "all 0.4s ease-in-out",
@@ -706,14 +734,14 @@ function LibrariesDropdown({ libraries }: { libraries: Plex.LibarySection[] }) {
         <Typography
           sx={{
             textDecoration: "none",
-            color: "inherit",
-            fontWeight: 500,
+            color: "var(--app-ink)",
+            fontWeight: 600,
             transition: "all 0.2s ease-in-out",
-            fontFamily: '"Inter Variable", sans-serif',
+            letterSpacing: "0.01em",
             userSelect: "none",
             cursor: "pointer",
             "&:hover": {
-              color: (theme) => theme.palette.primary.main,
+              color: (theme) => theme.palette.primary.light,
             },
           }}
         >
@@ -731,10 +759,11 @@ function LibrariesDropdown({ libraries }: { libraries: Plex.LibarySection[] }) {
         >
           <Box
             sx={{
-              backgroundColor: "#121212EE",
+              backgroundColor: "var(--app-surface-2)",
               backdropFilter: "blur(20px)",
-              borderRadius: "4px",
-              boxShadow: "0px 4px 20px 0px #000000AA",
+              borderRadius: "16px",
+              border: "1px solid var(--app-border)",
+              boxShadow: "var(--app-shadow)",
               padding: "15px",
               maxWidth: "600px",
               maxHeight: "400px",
@@ -756,15 +785,15 @@ function LibrariesDropdown({ libraries }: { libraries: Plex.LibarySection[] }) {
                   background: "transparent",
                 },
                 "&::-webkit-scrollbar-thumb": {
-                  background: (theme) => theme.palette.primary.main + "60",
-                  borderRadius: "2px",
-                },
-                "&::-webkit-scrollbar-thumb:hover": {
-                  background: (theme) => theme.palette.primary.main + "80",
-                },
-              }}
-            >
-              <Grid container spacing={1.5}>
+                        background: "rgba(255, 218, 180, 0.25)",
+                        borderRadius: "2px",
+                      },
+                      "&::-webkit-scrollbar-thumb:hover": {
+                        background: "rgba(255, 218, 180, 0.45)",
+                      },
+                    }}
+                  >
+                    <Grid container spacing={1.5}>
                 {remainingLibraries.map((library) => (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={library.key}>
                     <Box
@@ -779,9 +808,9 @@ function LibrariesDropdown({ libraries }: { libraries: Plex.LibarySection[] }) {
                         alignItems: "center",
                         justifyContent: "flex-start",
                         width: "100%",
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        backgroundColor: "rgba(255, 255, 255, 0.06)",
                         "&:hover": {
-                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          backgroundColor: "rgba(255, 255, 255, 0.12)",
                           transform: "translateY(-1px)",
                         },
                       }}
@@ -798,11 +827,10 @@ function LibrariesDropdown({ libraries }: { libraries: Plex.LibarySection[] }) {
                         );
                         setLibrariesAnchorEl(null);
                       }}
-                    >
-                      <Typography
-                        sx={{
+                      >
+                        <Typography
+                          sx={{
                           fontWeight: 500,
-                          fontFamily: '"Inter Variable", sans-serif',
                           fontSize: "14px",
                           lineHeight: "1.3",
                           textOverflow: "ellipsis",
@@ -838,16 +866,27 @@ function HeadLink({
 }): JSX.Element {
   const [, setSearchParams] = useSearchParams();
   return (
-    <Link
-      className={`head-link${active ? " head-link-active" : ""}`}
+    <Box
+      component={Link}
       to={to}
-      style={{
+      sx={{
+        px: 2,
+        py: 0.75,
+        borderRadius: 999,
         textDecoration: "none",
-        color: "inherit",
-        fontWeight: 500,
-        transition: "all 0.2s ease-in-out",
-        fontFamily: '"Inter Variable", sans-serif',
+        color: active ? "var(--app-nav-pill-text)" : "var(--app-ink)",
+        backgroundColor: active ? "var(--app-nav-pill)" : "transparent",
+        fontWeight: active ? 700 : 500,
+        fontSize: "0.95rem",
+        letterSpacing: "0.01em",
+        transition: "all 0.2s ease",
         userSelect: "none",
+        "&:hover": {
+          backgroundColor: active
+            ? "var(--app-nav-pill)"
+            : "rgba(255,255,255,0.08)",
+          color: active ? "var(--app-nav-pill-text)" : "var(--app-ink)",
+        },
       }}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -861,6 +900,6 @@ function HeadLink({
       aria-current={active ? "page" : undefined}
     >
       {children}
-    </Link>
+    </Box>
   );
 }

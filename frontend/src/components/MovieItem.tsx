@@ -63,12 +63,14 @@ export const useMovieItemPreviewPlayback =
 function MovieItem({
   item,
   itemsPerPage,
+  itemWidth,
   index,
   PlexTvSource,
   refetchData,
 }: {
   item: Plex.Metadata;
   itemsPerPage?: number;
+  itemWidth?: number;
   index?: number;
   PlexTvSource?: boolean;
   refetchData?: () => void;
@@ -206,6 +208,11 @@ function MovieItem({
   };
 
   // 300 x 170
+  const widthValue = itemWidth
+    ? `${itemWidth}px`
+    : itemsPerPage
+    ? `calc((100vw / ${itemsPerPage}) - 10px - (5vw / ${itemsPerPage}))`
+    : "100%";
   return (
     <>
       <Menu
@@ -361,32 +368,28 @@ function MovieItem({
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          width: itemsPerPage
-            ? `calc((100vw / ${itemsPerPage}) - 10px - (5vw / ${itemsPerPage}))`
-            : "100%",
-          minWidth: itemsPerPage
-            ? `calc((100vw / ${itemsPerPage}) - 10px - (5vw / ${itemsPerPage}))`
-            : "100%",
-          backgroundColor: "rgba(18, 18, 22, 0.7)",
-          backdropFilter: "blur(15px)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          width: widthValue,
+          minWidth: widthValue,
+          backgroundColor: "rgba(36, 19, 11, 0.75)",
+          backdropFilter: "blur(18px)",
+          border: "1px solid var(--app-border)",
 
-          borderRadius: "6px",
+          borderRadius: "18px",
           overflow: "hidden",
           mb: "0px",
           position: "relative",
-          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.3)",
+          boxShadow: "0 18px 36px rgba(8, 4, 2, 0.4)",
 
           "&:hover": {
-            transform: "scale(1.08)",
+            transform: "translateY(-6px) scale(1.04)",
             transition: "all 0.4s cubic-bezier(0.25,0.10,0.25,1.00)",
             zIndex: 10,
-            boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.4)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            backgroundColor: "rgba(18, 18, 22, 0.85)",
+            boxShadow: "0 24px 45px rgba(8, 4, 2, 0.55)",
+            border: "1px solid var(--app-border-strong)",
+            backgroundColor: "rgba(36, 19, 11, 0.9)",
             position: "relative",
             pb: "10px",
-            mb: "-42px",
+            mb: "-36px",
           },
 
           [`&:hover > :nth-child(${
@@ -469,7 +472,7 @@ function MovieItem({
               opacity: previewPlaybackState.playing ? 1 : 0,
               transition: "all 2s cubic-bezier(0.25,0.10,0.25,1.00)",
               backgroundColor: previewPlaybackState.playing
-                ? "rgba(18, 25, 39, 0.95)"
+                ? "rgba(14, 8, 5, 0.9)"
                 : "transparent",
               pointerEvents: "none",
 
@@ -502,9 +505,9 @@ function MovieItem({
 
           <IconButton
             sx={{
-              backgroundColor: "rgba(18, 25, 39, 0.8)",
+              backgroundColor: "var(--app-overlay)",
               backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: "1px solid var(--app-border)",
               opacity: previewPlaybackState.url ? 1 : 0,
               transition: "all 1s cubic-bezier(0.25,0.10,0.25,1.00)",
               position: "absolute",
@@ -512,7 +515,7 @@ function MovieItem({
               right: "10px",
               zIndex: 10,
               "&:hover": {
-                backgroundColor: "rgba(18, 25, 39, 0.95)",
+                backgroundColor: "var(--app-overlay-strong)",
                 transform: "scale(1.05)",
               },
             }}
@@ -542,9 +545,9 @@ function MovieItem({
                 position: "absolute",
                 top: "10px",
                 right: "10px",
-                backgroundColor: "rgba(18, 25, 39, 0.9)",
+                backgroundColor: "var(--app-overlay-strong)",
                 backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.2)",
+                border: "1px solid var(--app-border)",
                 borderRadius: "50%",
                 width: "32px",
                 height: "32px",
@@ -603,7 +606,7 @@ function MovieItem({
               fontSize: "11px",
               fontWeight: "600",
               letterSpacing: "0.1em",
-              color: (theme) => theme.palette.primary.light,
+              color: (theme) => theme.palette.secondary.main,
               textTransform: "uppercase",
               opacity: 0.9,
               mb: 0.5,
@@ -674,46 +677,6 @@ function MovieItem({
               gap: 1,
             }}
           >
-            {/* {item.rating && (
-            <Typography
-              sx={{
-                fontSize: "medium",
-                fontWeight: "light",
-                color: "#FFFFFF",
-                ml: 1,
-              }}
-            >
-              {item.rating}
-            </Typography>
-          )}
-          {item.contentRating && (
-            <Typography
-              sx={{
-                fontSize: "medium",
-                fontWeight: "light",
-                color: "#FFFFFF",
-                ml: 1,
-                border: "1px dotted #AAAAAA",
-                borderRadius: "5px",
-                px: 1,
-                py: -0.5,
-              }}
-            >
-              {item.contentRating}
-            </Typography>
-          )} */}
-            {/* {item.type === "episode" && item.index && (
-            <Typography
-              sx={{
-                fontSize: "medium",
-                fontWeight: "light",
-                color: "#FFFFFF",
-                ml: 1,
-              }}
-            >
-              S{item.parentIndex} E{item.index}
-            </Typography>
-          )} */}
             {item.duration && ["episode", "movie"].includes(item.type) && (
               <Typography
                 sx={{
@@ -789,14 +752,15 @@ function MovieItem({
               sx={{
                 width: "100%",
                 height: "100%",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                textTransform: "none",
                 gap: 0.5,
                 transition: "all 0.4s cubic-bezier(0.25,0.10,0.25,1.00)",
                 padding: "0px 10px",
-                fontSize: "13px",
+                fontSize: "0.85rem",
                 fontWeight: 600,
                 boxShadow: "none",
+                borderRadius: "12px",
               }}
               disabled={playButtonLoading}
               onClick={async (e) => {
@@ -829,15 +793,23 @@ export function WatchListButton({ item }: { item: Plex.Metadata }) {
 
   return (
     <Button
-      variant="contained"
+      variant="outlined"
       sx={{
         height: "38px",
+        minWidth: "38px",
+        borderRadius: "12px",
+        borderColor: "rgba(255, 255, 255, 0.2)",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         transition: "all 0.4s cubic-bezier(0.25,0.10,0.25,1.00)",
         boxShadow: "none",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
+        "&:hover": {
+          backgroundColor: "rgba(255, 255, 255, 0.12)",
+          borderColor: "rgba(255, 255, 255, 0.35)",
+        },
       }}
       onClick={(e) => {
         e.stopPropagation();

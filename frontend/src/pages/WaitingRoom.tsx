@@ -48,7 +48,6 @@ function WaitingRoom() {
 
       <Typography
         sx={{
-          color: "white",
           fontSize: "24px",
           fontWeight: "bold",
           textAlign: "center",

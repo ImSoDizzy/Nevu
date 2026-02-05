@@ -49,6 +49,7 @@ export default function Search() {
 
   return (
     <Box
+      className="app-page"
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -56,12 +57,9 @@ export default function Search() {
         justifyContent: "flex-start",
         height: "100%",
         width: "100%",
-        mt: "64px",
-        px: 6,
-        py: 2,
-
-        pt: 4,
-        pb: 6,
+        mt: 0,
+        px: 0,
+        py: 0,
       }}
     >
       <Typography variant="h3" sx={{ mt: 2 }}>
@@ -132,14 +130,15 @@ export function DirectoryItem({
         justifyContent: "center",
         width: "100%",
         height: "100%",
-        bgcolor: "rgba(0,0,0,0.1)",
-        borderRadius: "8px",
-        p: 2,
-        background: "#333333",
+        borderRadius: "16px",
+        p: 2.5,
+        background: "var(--app-surface-2)",
+        border: "1px solid var(--app-border)",
+        boxShadow: "0 16px 32px rgba(8, 4, 2, 0.35)",
         cursor: "pointer",
 
         "&:hover": {
-          background: "#444444",
+          background: "var(--app-surface-3)",
         },
         userSelect: "none",
       }}

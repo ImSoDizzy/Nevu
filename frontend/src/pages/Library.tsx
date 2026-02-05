@@ -35,6 +35,7 @@ export default function Library() {
 
   return (
     <Box
+      className="app-page"
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -42,11 +43,10 @@ export default function Library() {
         justifyContent: "flex-start",
         width: "100%",
         height: "fit-content",
-        mt: "64px",
-        px: 6,
-
-        pt: 4,
-        pb: 2,
+        mt: 0,
+        px: 0,
+        pt: 0,
+        pb: 0,
       }}
     >
       {isLoading && <CircularProgress />}

@@ -13,7 +13,7 @@ function Utility() {
         alignItems: "center",
         justifyContent: "center",
         height: "100vh",
-        backgroundColor: "black",
+        backgroundColor: "var(--app-bg)",
       }}
     >
       <Box
@@ -26,12 +26,15 @@ function Utility() {
           py: "1.5vh",
           width: "700px",
           height: "auto",
-          backgroundColor: "#1a1a1a",
+          backgroundColor: "var(--app-surface)",
+          border: "1px solid var(--app-border)",
+          borderRadius: "18px",
+          boxShadow: "0 22px 45px rgba(8, 4, 2, 0.5)",
         }}
       >
         <Typography
           sx={{
-            color: "white",
+            color: "var(--app-ink)",
             fontSize: "2rem",
             fontWeight: "bold",
             textAlign: "center",
@@ -44,7 +47,7 @@ function Utility() {
         {lastStatus?.error && (
           <Typography
             sx={{
-              color: "red",
+              color: "var(--app-accent)",
               fontSize: "1rem",
               fontWeight: "bold",
               textAlign: "center",
@@ -58,12 +61,12 @@ function Utility() {
                   <>
                     <br />
                     <br />
-                    <a
-                      href={word}
-                      style={{ color: "white", textDecoration: "underline" }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                      <a
+                        href={word}
+                        style={{ color: "var(--app-ink)", textDecoration: "underline" }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                       {word}
                     </a>
                     <br />
@@ -79,7 +82,7 @@ function Utility() {
         {frontEndStatus?.error && (
             <Typography
                 sx={{
-                color: "red",
+                color: "var(--app-accent)",
                 fontSize: "1rem",
                 fontWeight: "bold",
                 textAlign: "center",
@@ -95,7 +98,7 @@ function Utility() {
                         <br />
                         <a
                         href={word}
-                        style={{ color: "white", textDecoration: "underline" }}
+                        style={{ color: "var(--app-ink)", textDecoration: "underline" }}
                         target="_blank"
                         rel="noopener noreferrer"
                         >

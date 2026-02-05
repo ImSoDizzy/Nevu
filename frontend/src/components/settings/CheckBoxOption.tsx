@@ -23,7 +23,7 @@ function CheckBoxOption({
       </Stack>
       {subtitle && (
         <Typography sx={{
-            color: "#AAA",
+            color: "var(--app-ink-muted)",
             fontSize: "0.9rem",
             userSelect: "none",
             ml: "10px",

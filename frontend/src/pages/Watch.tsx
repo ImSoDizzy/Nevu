@@ -601,7 +601,7 @@ function Watch() {
           elevation={10}
           sx={{
             p: 4,
-            background: "#121216",
+            background: "var(--app-surface)",
             color: theme.palette.text.primary,
             borderRadius: 2,
             maxWidth: "500px",
@@ -785,7 +785,7 @@ function Watch() {
                   sx={{
                     fontSize: "2.5vw",
                     fontWeight: 700,
-                    color: "#FFF",
+                    color: "var(--app-ink)",
                     letterSpacing: "-0.01em",
                     lineHeight: 1.1,
                     textShadow: "0 2px 4px rgba(0,0,0,0.3)",
@@ -900,7 +900,7 @@ function Watch() {
                   sx={{
                     fontSize: "3.5vw",
                     fontWeight: 700,
-                    color: "#FFF",
+                    color: "var(--app-ink)",
                     letterSpacing: "-0.02em",
                     lineHeight: 1.1,
                     textShadow: "0 2px 4px rgba(0,0,0,0.3)",
@@ -1086,10 +1086,10 @@ function Watch() {
                       userSelect: "none",
                       cursor: "pointer",
                       transition: "all 0.3s ease-in-out",
-                      backgroundColor: "#00000088",
+                      backgroundColor: "var(--app-overlay)",
                       "&:hover": {
                         transition: "all 0s ease-in-out",
-                        backgroundColor: "#000000ee",
+                        backgroundColor: "var(--app-overlay-strong)",
                       },
                     }}
                     onClick={async () => {
@@ -1179,10 +1179,10 @@ function Watch() {
                       userSelect: "none",
                       cursor: "pointer",
                       transition: "all 0.3s ease-in-out",
-                      backgroundColor: "#00000088",
+                      backgroundColor: "var(--app-overlay)",
                       "&:hover": {
                         transition: "all 0s ease-in-out",
-                        backgroundColor: "#000000ee",
+                        backgroundColor: "var(--app-overlay-strong)",
                       },
                     }}
                     onClick={async () => {
@@ -1260,10 +1260,10 @@ function Watch() {
                     userSelect: "none",
                     cursor: "pointer",
                     transition: "all 0.3s ease-in-out",
-                    backgroundColor: "#00000088",
+                    backgroundColor: "var(--app-overlay)",
                     "&:hover": {
                       transition: "all 0s ease-in-out",
-                      backgroundColor: "#000000ee",
+                      backgroundColor: "var(--app-overlay-strong)",
                     },
                   }}
                   onClick={async () => {
@@ -1326,10 +1326,10 @@ function Watch() {
                       userSelect: "none",
                       cursor: "pointer",
                       transition: "all 0.3s ease-in-out",
-                      backgroundColor: "#00000088",
+                      backgroundColor: "var(--app-overlay)",
                       "&:hover": {
                         transition: "all 0s ease-in-out",
-                        backgroundColor: "#000000ee",
+                        backgroundColor: "var(--app-overlay-strong)",
                       },
                     }}
                     onClick={async () => {
@@ -1424,12 +1424,12 @@ function Watch() {
                     sx={{
                       px: 3,
                       py: 1.5,
-                      backgroundColor: "rgba(0,0,0,0.8)",
+                      backgroundColor: "var(--app-overlay)",
                       backdropFilter: "blur(20px)",
                       border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
-                      color: "#fff",
+                      color: "var(--app-ink)",
                       "&:hover": {
-                        backgroundColor: "rgba(0,0,0,0.9)",
+                        backgroundColor: "var(--app-overlay-strong)",
                         transform: "translateY(-2px)",
                         boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                         border: `1px solid ${alpha(
@@ -1504,12 +1504,12 @@ function Watch() {
                     sx={{
                       px: 3,
                       py: 1.5,
-                      backgroundColor: "rgba(0,0,0,0.8)",
+                      backgroundColor: "var(--app-overlay)",
                       backdropFilter: "blur(20px)",
                       border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
-                      color: "#fff",
+                      color: "var(--app-ink)",
                       "&:hover": {
-                        backgroundColor: "rgba(0,0,0,0.9)",
+                        backgroundColor: "var(--app-overlay-strong)",
                         transform: "translateY(-2px)",
                         boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                         border: `1px solid ${alpha(
@@ -1611,7 +1611,7 @@ function Watch() {
                     background:
                       settings["DISABLE_WATCHSCREEN_DARKENING"] === "true"
                         ? "transparent"
-                        : "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.8) 100%)",
+                        : "linear-gradient(180deg, rgba(20,10,6,0.5) 0%, rgba(20,10,6,0.3) 40%, rgba(20,10,6,0.3) 60%, rgba(20,10,6,0.85) 100%)",
                     pointerEvents: "none",
                   }}
                 >
@@ -1660,14 +1660,14 @@ function Watch() {
                       sx={{
                         width: 48,
                         height: 48,
-                        backgroundColor: "rgba(0,0,0,0.6)",
+                        backgroundColor: "rgba(20, 10, 6, 0.6)",
                         backdropFilter: "blur(20px)",
                         border: `1px solid ${alpha(
                           theme.palette.divider,
                           0.2
                         )}`,
                         "&:hover": {
-                          backgroundColor: "rgba(0,0,0,0.8)",
+                          backgroundColor: "var(--app-overlay)",
                           transform: "scale(1.05)",
                         },
                       }}
@@ -1683,7 +1683,7 @@ function Watch() {
                       mb: 0,
                       mx: 0,
                       background:
-                        "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.9) 100%)",
+                        "linear-gradient(180deg, transparent 0%, rgba(20,10,6,0.95) 100%)",
                       backdropFilter: "blur(20px)",
                       borderTop: `1px solid ${alpha(
                         theme.palette.divider,
@@ -1843,7 +1843,7 @@ function Watch() {
                             sx={{
                               fontSize: "1rem",
                               fontWeight: 600,
-                              color: "#fff",
+                              color: "var(--app-ink)",
                               textOverflow: "ellipsis",
                               overflow: "hidden",
                               whiteSpace: "nowrap",
@@ -1874,7 +1874,7 @@ function Watch() {
                               sx={{
                                 fontSize: "0.9rem",
                                 fontWeight: 600,
-                                color: "#fff",
+                                color: "var(--app-ink)",
                                 textOverflow: "ellipsis",
                                 overflow: "hidden",
                                 whiteSpace: "nowrap",
@@ -1993,7 +1993,7 @@ function Watch() {
                         sx={{
                           height: "auto",
                           userSelect: "none",
-                          backgroundColor: "#00000088",
+                          backgroundColor: "var(--app-overlay)",
                           backdropFilter: "blur(20px)",
                           border: `1px solid ${alpha(
                             theme.palette.divider,
@@ -2239,7 +2239,7 @@ function NextEPButton({ queue }: { queue?: Plex.Metadata[] }) {
                   justifyContent: "flex-start",
                   p: 2,
 
-                  backgroundColor: "#00000088",
+                  backgroundColor: "var(--app-overlay)",
                 }}
               >
                 <Typography
@@ -2258,7 +2258,7 @@ function NextEPButton({ queue }: { queue?: Plex.Metadata[] }) {
                   sx={{
                     fontSize: "0.8vw",
                     fontWeight: "bold",
-                    color: "#FFF",
+                    color: "var(--app-ink)",
                   }}
                 >
                   {queue[1].title}
@@ -2268,7 +2268,7 @@ function NextEPButton({ queue }: { queue?: Plex.Metadata[] }) {
                   sx={{
                     mt: "2px",
                     fontSize: "0.6vw",
-                    color: "#FFF",
+                    color: "var(--app-ink)",
 
                     // max 5 lines
                     display: "-webkit-box",
@@ -2325,10 +2325,10 @@ function TuneSettingTab(
         userSelect: "none",
         cursor: "pointer",
         transition: "all 0.3s ease-in-out",
-        backgroundColor: "#00000088",
+        backgroundColor: "var(--app-overlay)",
         "&:hover": {
           transition: "all 0s ease-in-out",
-          backgroundColor: "#000000ee",
+          backgroundColor: "var(--app-overlay-strong)",
         },
       }}
       onClick={() => {
