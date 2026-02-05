@@ -363,6 +363,7 @@ function MovieItem({
       </Menu>
 
       <Box
+        className="app-card"
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -370,23 +371,24 @@ function MovieItem({
           justifyContent: "flex-end",
           width: widthValue,
           minWidth: widthValue,
-          backgroundColor: "rgba(36, 19, 11, 0.75)",
+          background:
+            "linear-gradient(140deg, rgba(49, 52, 78, 0.88), rgba(30, 32, 50, 0.92))",
           backdropFilter: "blur(18px)",
           border: "1px solid var(--app-border)",
-
-          borderRadius: "18px",
+          borderRadius: "var(--app-radius-md)",
           overflow: "hidden",
           mb: "0px",
           position: "relative",
-          boxShadow: "0 18px 36px rgba(7, 8, 15, 0.4)",
+          boxShadow: "var(--app-shadow)",
 
           "&:hover": {
-            transform: "translateY(-6px) scale(1.04)",
+            transform: "translateY(-6px) scale(1.03)",
             transition: "all 0.4s cubic-bezier(0.25,0.10,0.25,1.00)",
             zIndex: 10,
-            boxShadow: "0 24px 45px rgba(7, 8, 15, 0.55)",
+            boxShadow: "0 28px 60px rgba(7, 8, 15, 0.65)",
             border: "1px solid var(--app-border-strong)",
-            backgroundColor: "rgba(36, 19, 11, 0.9)",
+            background:
+              "linear-gradient(140deg, rgba(58, 62, 90, 0.92), rgba(32, 35, 54, 0.96))",
             position: "relative",
             pb: "10px",
             mb: "-36px",
