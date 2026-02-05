@@ -237,17 +237,30 @@ S - Skip onscreen markers (intro, credits, etc)
           px: { xs: 2, md: 3 },
           py: 1.25,
           borderRadius: "var(--app-radius-lg)",
-          background: scrollAtTop
-            ? "linear-gradient(135deg, rgba(36, 38, 60, 0.72), rgba(18, 19, 30, 0.65))"
-            : "linear-gradient(135deg, rgba(36, 38, 60, 0.92), rgba(18, 19, 30, 0.92))",
+          position: "relative",
+          background: "transparent",
           border: "1px solid var(--app-border)",
           boxShadow: scrollAtTop
             ? "0 18px 45px rgba(7, 8, 15, 0.35)"
             : "0 24px 60px rgba(7, 8, 15, 0.55)",
-          backdropFilter: "blur(18px)",
           overflow: "hidden",
-          clipPath: "inset(0 round var(--app-radius-lg))",
           isolation: "isolate",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            borderRadius: "inherit",
+            background: scrollAtTop
+              ? "linear-gradient(135deg, rgba(36, 38, 60, 0.72), rgba(18, 19, 30, 0.65))"
+              : "linear-gradient(135deg, rgba(36, 38, 60, 0.92), rgba(18, 19, 30, 0.92))",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            zIndex: 0,
+          },
+          "& > *": {
+            position: "relative",
+            zIndex: 1,
+          },
           transition: "all 0.3s ease",
         }}
       >

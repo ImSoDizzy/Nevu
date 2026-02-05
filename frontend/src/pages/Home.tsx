@@ -9,7 +9,6 @@ import {
 import { shuffleArray } from "../common/ArrayExtra";
 import MovieItemSlider from "../components/MovieItemSlider";
 import HeroDisplay from "../components/HeroDisplay";
-import { useWatchListCache } from "../states/WatchListCache";
 import { useUserSettings } from "../states/UserSettingsState";
 
 export default function Home() {
@@ -20,7 +19,6 @@ export default function Home() {
   const [randomItem, setRandomItem] = React.useState<Plex.Metadata | null>(
     null
   );
-  const { watchListCache } = useWatchListCache();
   const { settings, loaded: settingsLoaded } = useUserSettings();
 
   const [loading, setLoading] = React.useState(true);
@@ -92,58 +90,59 @@ export default function Home() {
         flexDirection: "column",
         alignItems: "stretch",
         justifyContent: "flex-start",
+        position: "relative",
+        gap: { xs: 6, md: 8 },
       }}
     >
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 0,
+          background:
+            "radial-gradient(circle at 18% 0%, rgba(80, 70, 225, 0.18), transparent 45%), radial-gradient(circle at 82% 8%, rgba(122, 112, 255, 0.14), transparent 45%)",
+        }}
+      />
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: { xs: 6, md: 8 },
+        }}
+      >
       {randomItem && <HeroDisplay item={randomItem} />}
       <Box
-        className="app-section"
         sx={{
           width: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-start",
-          pb: 8,
-          mt: randomItem ? "-8vh" : 6,
-          zIndex: 1,
+          gap: { xs: 6, md: 8 },
+          pb: { xs: 6, md: 8 },
+          mt: randomItem ? { xs: 2, md: 4 } : 0,
         }}
       >
-        <Box
-          sx={{
-            zIndex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            justifyContent: "flex-start",
-            gap: 8,
-          }}
-        >
-          <MovieItemSlider
-            title="Continue Watching"
-            dir="/library/onDeck"
-            link="/library/onDeck"
-          />
+        <MovieItemSlider
+          title="Continue Watching"
+          dir="/library/onDeck"
+          link="/library/onDeck"
+        />
 
-          {watchListCache && watchListCache.length > 0 && (
+        {featured &&
+          featured.map((item, index) => (
             <MovieItemSlider
-              title="Watchlist"
-              data={watchListCache}
-              plexTvSource={true}
-              link="/plextv/watchlist"
+              key={index}
+              title={item.title}
+              dir={item.dir}
+              shuffle={true}
+              link={item.link}
             />
-          )}
-
-          {featured &&
-            featured.map((item, index) => (
-              <MovieItemSlider
-                key={index}
-                title={item.title}
-                dir={item.dir}
-                shuffle={true}
-                link={item.link}
-              />
-            ))}
-        </Box>
+          ))}
+      </Box>
       </Box>
     </Box>
   );

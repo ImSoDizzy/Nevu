@@ -68,8 +68,8 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
-        pt: { xs: 2, md: 4 },
-        px: { xs: 2, md: 4 },
+        pt: { xs: 1, md: 2 },
+        px: "2.5vw",
       }}
     >
       <Box
@@ -118,7 +118,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
       <Box
         sx={{
           width: "100%",
-          minHeight: { xs: "65vh", md: "72vh" },
+          minHeight: { xs: "56vh", md: "66vh" },
           height: "auto",
           display: "flex",
           flexDirection: "column",
@@ -188,6 +188,19 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
             }}
           />
         </Box>
+        <Box
+          sx={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: { xs: "48%", md: "52%" },
+            backgroundImage:
+              "linear-gradient(180deg, rgba(16, 17, 28, 0) 0%, rgba(16, 17, 28, 0.55) 45%, rgba(16, 17, 28, 0.95) 100%)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
 
         <Box
           sx={{
@@ -342,25 +355,6 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           </Box>
         </Box>
       </Box>
-      <Box
-        sx={{
-          width: "100%",
-          height: "35vh",
-          position: "absolute",
-          top: "60%",
-          left: 0,
-          right: 0,
-
-          backgroundImage:
-            "linear-gradient(180deg, rgba(16, 17, 28, 0) 0%, rgba(16, 17, 28, 0.65) 55%, rgba(16, 17, 28, 1) 100%)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: "transparent",
-          zIndex: 1,
-          pointerEvents: "none",
-        }}
-      />
     </Box>
   );
 }
