@@ -1,7 +1,6 @@
 import {
   Typography,
   Box,
-  Divider,
   CircularProgress,
   Checkbox,
   Stack,
@@ -9,7 +8,6 @@ import {
 import React, { useEffect } from "react";
 import { DragIndicatorRounded } from "@mui/icons-material";
 import { getAllLibraries } from "../../plex";
-import CheckBoxOption from "../../components/settings/CheckBoxOption";
 import SettingHelpIcon from "../../components/settings/SettingHelpIcon";
 import { useUserSettings } from "../../states/UserSettingsState";
 import {
@@ -106,23 +104,6 @@ function SettingsLibraries() {
       </Box>
 
       <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2, width: "100%" }}>
-        <CheckBoxOption
-          title="Disable Home Libraries Section"
-          subtitle="Disables the section on the home screen where the libraries are displayed."
-          helpText="Hide the libraries section on the home page."
-          checked={settings.DISABLE_HOME_SCREEN_LIBRARIES === "true"}
-          onChange={() => {
-            setSetting(
-              "DISABLE_HOME_SCREEN_LIBRARIES",
-              settings["DISABLE_HOME_SCREEN_LIBRARIES"] === "true"
-                ? "false"
-                : "true"
-            );
-          }}
-        />
-
-        <Divider sx={{ my: 2 }} />
-
         {loading && (
           <CircularProgress
             sx={{ alignSelf: "center", mt: 2 }}
