@@ -5,6 +5,8 @@ import {
   Avatar,
   Backdrop,
   Box,
+  Button,
+  ButtonGroup,
   CircularProgress,
   ClickAwayListener,
   Divider,
@@ -44,6 +46,7 @@ import { useSyncSessionState } from "../states/SyncSessionState";
 import { config } from "..";
 import { useBigReader } from "./BigReader";
 import { useUserSettings } from "../states/UserSettingsState";
+import { useBrowsePageOptions } from "../states/BrowsePageOptions";
 
 const BarSide: SxProps<Theme> = {
   display: "flex",
@@ -92,6 +95,8 @@ function Appbar() {
       setLibraries(filtered.filter((lib) => ["movie", "show"].includes(lib.type)));
     });
   }, [settings]);
+
+  const showBrowseToggle = location.pathname.startsWith("/browse/");
 
   return (
     <AppBar
@@ -307,6 +312,7 @@ S - Skip onscreen markers (intro, credits, etc)
           gap: 2,
         }}
       >
+        {showBrowseToggle && <BrowsePageToggle />}
         <SearchBar />
 
         <IconButton
@@ -356,6 +362,107 @@ S - Skip onscreen markers (intro, credits, etc)
 }
 
 export default Appbar;
+
+function BrowsePageToggle() {
+  const { page, setPage } = useBrowsePageOptions();
+
+  return (
+    <ButtonGroup
+      variant="text"
+      sx={{
+        height: 38,
+        width: "auto",
+        minWidth: { xs: 220, sm: 260, md: 320 },
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderRadius: 999,
+        padding: "2px",
+        boxShadow: "none",
+        transition: "all 0.2s ease",
+        "&:hover": {
+          backgroundColor: "rgba(255, 255, 255, 0.12)",
+        },
+        "& .MuiButtonGroup-grouped": {
+          flex: 1,
+          minWidth: 0,
+          border: "1px solid transparent",
+          borderRadius: 0,
+          fontWeight: 600,
+          letterSpacing: "0.02em",
+          textTransform: "none",
+          fontSize: "0.9rem",
+          padding: "5px 12px",
+          whiteSpace: "nowrap",
+          transition: "all 0.2s ease",
+        },
+        "& .MuiButtonGroup-grouped:not(:first-of-type)": {
+          borderLeft: "none",
+        },
+        "& .MuiButtonGroup-grouped:first-of-type": {
+          borderTopLeftRadius: 999,
+          borderBottomLeftRadius: 999,
+        },
+        "& .MuiButtonGroup-grouped:last-of-type": {
+          borderTopRightRadius: 999,
+          borderBottomRightRadius: 999,
+        },
+      }}
+    >
+      <Button
+        sx={{
+          color:
+            page === "recommendations"
+              ? "var(--app-nav-pill-text)"
+              : "var(--app-ink)",
+          backgroundColor:
+            page === "recommendations"
+              ? "rgba(80, 70, 225, 0.35)"
+              : "transparent",
+          borderColor:
+            page === "recommendations"
+              ? "rgba(255, 255, 255, 0.2)"
+              : "transparent",
+          backdropFilter:
+            page === "recommendations" ? "blur(12px)" : "none",
+          WebkitBackdropFilter:
+            page === "recommendations" ? "blur(12px)" : "none",
+          "&:hover": {
+            backgroundColor:
+              page === "recommendations"
+                ? "rgba(80, 70, 225, 0.45)"
+                : "rgba(255, 255, 255, 0.08)",
+          },
+        }}
+        onClick={() => setPage("recommendations")}
+      >
+        Recommended
+      </Button>
+      <Button
+        sx={{
+          color:
+            page === "browse" ? "var(--app-nav-pill-text)" : "var(--app-ink)",
+          backgroundColor:
+            page === "browse" ? "rgba(80, 70, 225, 0.35)" : "transparent",
+          borderColor:
+            page === "browse"
+              ? "rgba(255, 255, 255, 0.2)"
+              : "transparent",
+          backdropFilter: page === "browse" ? "blur(12px)" : "none",
+          WebkitBackdropFilter: page === "browse" ? "blur(12px)" : "none",
+          "&:hover": {
+            backgroundColor:
+              page === "browse"
+                ? "rgba(80, 70, 225, 0.45)"
+                : "rgba(255, 255, 255, 0.08)",
+          },
+        }}
+        onClick={() => setPage("browse")}
+      >
+        Browse
+      </Button>
+    </ButtonGroup>
+  );
+}
 
 function SearchBar() {
   const [searchAnchorEl, setSearchAnchorEl] =
