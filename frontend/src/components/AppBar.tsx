@@ -47,6 +47,10 @@ import { config } from "..";
 import { useBigReader } from "./BigReader";
 import { useUserSettings } from "../states/UserSettingsState";
 import { useBrowsePageOptions } from "../states/BrowsePageOptions";
+import {
+  LIBRARY_ORDER_SETTING_KEY,
+  sortLibrariesBySettingsOrder,
+} from "../common/LibrarySettings";
 
 const BarSide: SxProps<Theme> = {
   display: "flex",
@@ -85,7 +89,12 @@ function Appbar() {
 
   useEffect(() => {
     getAllLibraries().then((res) => {
-      const filtered = res.filter((library) => {
+      const orderedLibraries = sortLibrariesBySettingsOrder(
+        res,
+        settings[LIBRARY_ORDER_SETTING_KEY]
+      );
+
+      const filtered = orderedLibraries.filter((library) => {
         const key = `LIBRARY_${library.uuid}`;
         const rawValue = settings[key];
 

@@ -7,6 +7,10 @@ import {
   getLibrarySecondary,
 } from "../plex";
 import { shuffleArray } from "../common/ArrayExtra";
+import {
+  LIBRARY_ORDER_SETTING_KEY,
+  sortLibrariesBySettingsOrder,
+} from "../common/LibrarySettings";
 import MovieItemSlider from "../components/MovieItemSlider";
 import HeroDisplay from "../components/HeroDisplay";
 import { useUserSettings } from "../states/UserSettingsState";
@@ -30,8 +34,12 @@ export default function Home() {
       setLoading(true);
       try {
         const librariesData = await getAllLibraries();
+        const orderedLibraries = sortLibrariesBySettingsOrder(
+          librariesData,
+          settings[LIBRARY_ORDER_SETTING_KEY]
+        );
 
-        const enabledLibraries = librariesData.filter((library) => {
+        const enabledLibraries = orderedLibraries.filter((library) => {
           const key = `LIBRARY_${library.uuid}`;
           const value = settings[key];
           return value === undefined || value === "true"; // Default to true
