@@ -10,6 +10,10 @@ import {
   LIBRARY_ORDER_SETTING_KEY,
   sortLibrariesBySettingsOrder,
 } from "../common/LibrarySettings";
+import {
+  applyRecommendationCategorySettings,
+  buildRecommendationGenreCategoryId,
+} from "../common/RecommendationSettings";
 import MovieItemSlider from "../components/MovieItemSlider";
 import HeroDisplay from "../components/HeroDisplay";
 import { useUserSettings } from "../states/UserSettingsState";
@@ -49,7 +53,7 @@ export default function Home() {
           .filter((lib) => ["movie", "show"].includes(lib.type))
           .slice(0, 4); // limit to first 4 libraries
 
-        const featuredData = await getRecommendations(filteredLibraries);
+        const featuredData = await getRecommendations(filteredLibraries, settings);
         setFeatured(featuredData);
 
         let randomItemData = await getRandomItem(filteredLibraries);
@@ -155,23 +159,27 @@ export default function Home() {
   );
 }
 
-async function getRecommendations(libraries: Plex.Directory[]) {
-  const genreSelection: PerPlexed.RecommendationShelf[] = [];
+async function getRecommendations(
+  libraries: Plex.LibarySection[],
+  settings: Record<string, string>
+) {
+  const genreSelection: (PerPlexed.RecommendationShelf & {
+    id: string;
+    groupKey: string;
+  })[] = [];
 
   for (const library of libraries) {
     const genres = await getLibrarySecondary(library.key, "genre");
 
     if (!genres || !genres.length) continue;
 
-    const selectGenres: Plex.Directory[] = [];
-
     const sortedGenres = [...genres].sort((left, right) =>
       left.title.localeCompare(right.title)
     );
-    selectGenres.push(...sortedGenres.slice(0, 5));
-
-    for (const genre of selectGenres) {
+    for (const genre of sortedGenres) {
       genreSelection.push({
+        id: buildRecommendationGenreCategoryId(library.uuid, genre.key),
+        groupKey: library.uuid,
         title: `${library.title} - ${genre.title}`,
         libraryID: library.key,
         dir: `/library/sections/${library.key}/genre/${genre.key}`,
@@ -180,7 +188,7 @@ async function getRecommendations(libraries: Plex.Directory[]) {
     }
   }
 
-  return genreSelection;
+  return applyRecommendationCategorySettings(genreSelection, settings);
 }
 
 // get one completely random item from any library

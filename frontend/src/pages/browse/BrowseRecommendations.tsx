@@ -6,6 +6,11 @@ import MovieItemSlider from "../../components/MovieItemSlider";
 import { getLibrary, getLibraryDir, getLibraryMeta } from "../../plex";
 import { getIncludeProps } from "../../plex/QuickFunctions";
 import { motion } from "framer-motion";
+import { useUserSettings } from "../../states/UserSettingsState";
+import {
+  applyRecommendationCategorySettings,
+  buildRecommendationGenreCategoryId,
+} from "../../common/RecommendationSettings";
 
 interface Category {
   title: string;
@@ -16,8 +21,14 @@ interface Category {
   shuffle?: boolean;
 }
 
+interface GenreCategory extends Category {
+  id: string;
+  groupKey: string;
+}
+
 function BrowseRecommendations() {
   const { libraryID } = useParams<{ libraryID: string }>();
+  const { settings } = useUserSettings();
   const [library, setLibrary] = React.useState<Plex.MediaContainer | null>(
     null
   );
@@ -54,24 +65,27 @@ function BrowseRecommendations() {
     (async () => {
       let categoryPool: Category[] = [];
 
-      const getGenres = new Promise<Category[]>((resolve) => {
+      const getGenres = new Promise<GenreCategory[]>((resolve) => {
         getLibraryDir(
           `/library/sections/${library.librarySectionID.toString()}/genre`
         ).then(async (media) => {
           const genres = media.Directory;
-          if (!genres || !genres.length) return;
+          if (!genres || !genres.length) return resolve([]);
+
+          const libraryIdentity =
+            library.librarySectionUUID || library.librarySectionID.toString();
           const genreSelection = [...genres]
             .sort((left, right) => left.title.localeCompare(right.title))
-            .slice(0, 8);
-
-          resolve(
-            genreSelection.map((genre) => ({
+            .map((genre) => ({
+              id: buildRecommendationGenreCategoryId(libraryIdentity, genre.key),
+              groupKey: libraryIdentity,
               title: genre.title,
               dir: `/library/sections/${library.librarySectionID}/genre/${genre.key}`,
               link: `/library/sections/${library.librarySectionID}/genre/${genre.key}`,
               shuffle: true,
-            }))
-          );
+            }));
+
+          resolve(genreSelection);
         });
       });
 
@@ -148,7 +162,9 @@ function BrowseRecommendations() {
         });
       }
 
-      categoryPool = [...categoryPool, ...genres];
+      const selectedGenres = applyRecommendationCategorySettings(genres, settings);
+
+      categoryPool = [...categoryPool, ...selectedGenres];
 
       if (library.Type?.[0].type === "movie") {
         categoryPool.unshift({
@@ -172,7 +188,7 @@ function BrowseRecommendations() {
 
       setCategories(categoryPool);
     })();
-  }, [library]);
+  }, [library, settings]);
 
   if (!featuredItem || !categories || !library)
     return (
