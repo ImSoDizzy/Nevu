@@ -413,7 +413,7 @@ function MetaScreen() {
             height: "30vh",
             width: "100%",
             background:
-              "linear-gradient(180deg, rgba(20, 10, 6, 0), rgba(20, 10, 6, 0.92), rgba(20, 10, 6, 1))",
+              "linear-gradient(180deg, rgba(16, 17, 28, 0), rgba(16, 17, 28, 0.92), rgba(16, 17, 28, 1))",
             zIndex: 1,
           }}
         />

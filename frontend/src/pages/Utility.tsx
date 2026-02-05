@@ -29,7 +29,7 @@ function Utility() {
           backgroundColor: "var(--app-surface)",
           border: "1px solid var(--app-border)",
           borderRadius: "18px",
-          boxShadow: "0 22px 45px rgba(8, 4, 2, 0.5)",
+          boxShadow: "0 22px 45px rgba(7, 8, 15, 0.5)",
         }}
       >
         <Typography

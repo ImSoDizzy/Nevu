@@ -173,7 +173,7 @@ export function Toast({
         background: "var(--app-surface-2)",
         border: "1px solid var(--app-border)",
         borderRadius: "16px",
-        boxShadow: "0 18px 35px rgba(8, 4, 2, 0.45)",
+        boxShadow: "0 18px 35px rgba(7, 8, 15, 0.45)",
 
         display: "flex",
         flexDirection: "row",

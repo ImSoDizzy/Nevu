@@ -378,13 +378,13 @@ function MovieItem({
           overflow: "hidden",
           mb: "0px",
           position: "relative",
-          boxShadow: "0 18px 36px rgba(8, 4, 2, 0.4)",
+          boxShadow: "0 18px 36px rgba(7, 8, 15, 0.4)",
 
           "&:hover": {
             transform: "translateY(-6px) scale(1.04)",
             transition: "all 0.4s cubic-bezier(0.25,0.10,0.25,1.00)",
             zIndex: 10,
-            boxShadow: "0 24px 45px rgba(8, 4, 2, 0.55)",
+            boxShadow: "0 24px 45px rgba(7, 8, 15, 0.55)",
             border: "1px solid var(--app-border-strong)",
             backgroundColor: "rgba(36, 19, 11, 0.9)",
             position: "relative",
@@ -472,7 +472,7 @@ function MovieItem({
               opacity: previewPlaybackState.playing ? 1 : 0,
               transition: "all 2s cubic-bezier(0.25,0.10,0.25,1.00)",
               backgroundColor: previewPlaybackState.playing
-                ? "rgba(14, 8, 5, 0.9)"
+                ? "rgba(10, 11, 18, 0.92)"
                 : "transparent",
               pointerEvents: "none",
 

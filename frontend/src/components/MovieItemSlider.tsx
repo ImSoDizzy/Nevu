@@ -258,7 +258,7 @@ function MovieItemSlider({
             left: "0px",
             top: 0,
             bottom: 0,
-            backgroundColor: "rgba(20, 10, 6, 0.35)",
+            backgroundColor: "rgba(16, 17, 28, 0.35)",
             backdropFilter: "blur(8px)",
             borderTopLeftRadius: "14px",
             borderBottomLeftRadius: "14px",
@@ -270,7 +270,7 @@ function MovieItemSlider({
             visibility: itemCount > itemsPerPage ? "visible" : "hidden",
 
             "&:hover": {
-              backgroundColor: "rgba(20, 10, 6, 0.65)",
+              backgroundColor: "rgba(16, 17, 28, 0.65)",
             },
 
             transition: "all 0.5s ease",
@@ -348,7 +348,7 @@ function MovieItemSlider({
             right: "0px",
             top: 0,
             bottom: 0,
-            backgroundColor: "rgba(20, 10, 6, 0.35)",
+            backgroundColor: "rgba(16, 17, 28, 0.35)",
             backdropFilter: "blur(8px)",
             borderTopRightRadius: "14px",
             borderBottomRightRadius: "14px",
@@ -360,7 +360,7 @@ function MovieItemSlider({
             visibility: itemCount > itemsPerPage ? "visible" : "hidden",
 
             "&:hover": {
-              backgroundColor: "rgba(20, 10, 6, 0.65)",
+              backgroundColor: "rgba(16, 17, 28, 0.65)",
             },
 
             transition: "all 0.5s ease",

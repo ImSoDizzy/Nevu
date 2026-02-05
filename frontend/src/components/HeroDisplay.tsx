@@ -124,7 +124,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          background: `linear-gradient(120deg, rgba(16, 9, 6, 0.85) 0%, rgba(16, 9, 6, 0.4) 55%, rgba(16, 9, 6, 0.15) 100%), url(${getTranscodeImageURL(
+          background: `linear-gradient(120deg, rgba(16, 17, 28, 0.85) 0%, rgba(16, 17, 28, 0.4) 55%, rgba(16, 17, 28, 0.15) 100%), url(${getTranscodeImageURL(
             item?.art,
             1920,
             1080
@@ -352,7 +352,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           right: 0,
 
           backgroundImage:
-            "linear-gradient(180deg, rgba(20, 10, 6, 0) 0%, rgba(20, 10, 6, 0.65) 55%, rgba(20, 10, 6, 1) 100%)",
+            "linear-gradient(180deg, rgba(16, 17, 28, 0) 0%, rgba(16, 17, 28, 0.65) 55%, rgba(16, 17, 28, 1) 100%)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

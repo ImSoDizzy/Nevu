@@ -1,22 +1,22 @@
 :root {
-  --app-bg: #140a06;
-  --app-bg-strong: #0c0603;
-  --app-surface: #24130b;
-  --app-surface-2: #2f1a10;
-  --app-surface-3: #3a2215;
-  --app-accent: #e35b35;
-  --app-accent-strong: #f07a45;
-  --app-accent-soft: rgba(227, 91, 53, 0.25);
-  --app-ink: #f8f1e8;
-  --app-ink-muted: #cbb6a3;
-  --app-border: rgba(255, 218, 180, 0.14);
-  --app-border-strong: rgba(255, 218, 180, 0.28);
-  --app-shadow: 0 24px 60px rgba(6, 3, 2, 0.55);
-  --app-glow: 0 0 0 1px rgba(255, 218, 180, 0.08);
-  --app-nav-pill: #f5ede2;
-  --app-nav-pill-text: #1e110a;
-  --app-overlay: rgba(14, 8, 5, 0.7);
-  --app-overlay-strong: rgba(14, 8, 5, 0.9);
+  --app-bg: #12131b;
+  --app-bg-strong: #0c0d14;
+  --app-surface: #1a1b26;
+  --app-surface-2: #212335;
+  --app-surface-3: #2a2d44;
+  --app-accent: #5046e1;
+  --app-accent-strong: #675df0;
+  --app-accent-soft: rgba(80, 70, 225, 0.25);
+  --app-ink: #f2f3ff;
+  --app-ink-muted: #b8bddb;
+  --app-border: rgba(184, 189, 219, 0.16);
+  --app-border-strong: rgba(184, 189, 219, 0.32);
+  --app-shadow: 0 24px 60px rgba(7, 8, 15, 0.55);
+  --app-glow: 0 0 0 1px rgba(184, 189, 219, 0.12);
+  --app-nav-pill: #5046e1;
+  --app-nav-pill-text: #f8f9ff;
+  --app-overlay: rgba(10, 11, 18, 0.72);
+  --app-overlay-strong: rgba(10, 11, 18, 0.9);
   --app-gutter: 32px;
   --app-content-width: 1320px;
   --app-radius-lg: 28px;
@@ -26,7 +26,7 @@
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 218, 180, 0.3) transparent;
+  scrollbar-color: rgba(184, 189, 219, 0.35) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -38,12 +38,12 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 218, 180, 0.28);
+  background: rgba(184, 189, 219, 0.35);
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 218, 180, 0.45);
+  background: rgba(184, 189, 219, 0.55);
 }
 
 body,
@@ -58,9 +58,9 @@ body {
   font-family: "IBM Plex Sans", sans-serif;
   color: var(--app-ink);
   background:
-    radial-gradient(circle at 20% 20%, rgba(255, 140, 98, 0.12), transparent 45%),
-    radial-gradient(circle at 80% 10%, rgba(247, 198, 118, 0.08), transparent 55%),
-    linear-gradient(180deg, #1c0f08 0%, #120906 45%, #0c0603 100%);
+    radial-gradient(circle at 18% 18%, rgba(80, 70, 225, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 12%, rgba(122, 112, 255, 0.12), transparent 55%),
+    linear-gradient(180deg, #171826 0%, #12131b 45%, #0c0d14 100%);
   overflow-x: hidden;
 }
 
@@ -74,8 +74,8 @@ a {
 }
 
 ::selection {
-  background: rgba(227, 91, 53, 0.35);
-  color: #120906;
+  background: rgba(80, 70, 225, 0.35);
+  color: #0c0d14;
 }
 
 .app-page {
@@ -94,7 +94,7 @@ a {
 }
 
 .app-card {
-  background: linear-gradient(140deg, rgba(58, 30, 18, 0.85), rgba(28, 15, 10, 0.9));
+  background: linear-gradient(140deg, rgba(49, 52, 78, 0.88), rgba(30, 32, 50, 0.92));
   border: 1px solid var(--app-border);
   border-radius: var(--app-radius-md);
   box-shadow: var(--app-shadow);

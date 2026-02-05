@@ -48,7 +48,7 @@ function Settings() {
           padding: "14px",
           borderRadius: "18px",
           border: "1px solid var(--app-border)",
-          boxShadow: "0 18px 35px rgba(8, 4, 2, 0.35)",
+          boxShadow: "0 18px 35px rgba(7, 8, 15, 0.35)",
         }}
       >
         <SettingsDivider title="General" />
@@ -71,7 +71,7 @@ function Settings() {
           padding: "24px",
           borderRadius: "18px",
           border: "1px solid var(--app-border)",
-          boxShadow: "0 18px 35px rgba(8, 4, 2, 0.35)",
+          boxShadow: "0 18px 35px rgba(7, 8, 15, 0.35)",
           ml: "auto",
           mr: "auto",
         }}

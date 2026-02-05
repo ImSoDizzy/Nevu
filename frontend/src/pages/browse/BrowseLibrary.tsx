@@ -141,7 +141,7 @@ function BrowseLibrary() {
           justifyContent: "flex-start",
           gap: 2,
           py: 1,
-          background: "linear-gradient(180deg, rgba(20, 10, 6, 0.85), rgba(20, 10, 6, 0))",
+          background: "linear-gradient(180deg, rgba(16, 17, 28, 0.85), rgba(16, 17, 28, 0))",
         }}
       >
         <Select

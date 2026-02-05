@@ -134,7 +134,7 @@ export function DirectoryItem({
         p: 2.5,
         background: "var(--app-surface-2)",
         border: "1px solid var(--app-border)",
-        boxShadow: "0 16px 32px rgba(8, 4, 2, 0.35)",
+        boxShadow: "0 16px 32px rgba(7, 8, 15, 0.35)",
         cursor: "pointer",
 
         "&:hover": {

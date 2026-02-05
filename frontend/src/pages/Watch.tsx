@@ -1660,7 +1660,7 @@ function Watch() {
                       sx={{
                         width: 48,
                         height: 48,
-                        backgroundColor: "rgba(20, 10, 6, 0.6)",
+                        backgroundColor: "rgba(16, 17, 28, 0.6)",
                         backdropFilter: "blur(20px)",
                         border: `1px solid ${alpha(
                           theme.palette.divider,

@@ -151,7 +151,7 @@ function LibraryScreen() {
             }),
 
             borderRadius: "18px",
-            boxShadow: "0 20px 45px rgba(8, 4, 2, 0.45)",
+            boxShadow: "0 20px 45px rgba(7, 8, 15, 0.45)",
           }}
           onClick={(e) => {
             e.stopPropagation();

@@ -238,12 +238,12 @@ S - Skip onscreen markers (intro, credits, etc)
           py: 1.25,
           borderRadius: "var(--app-radius-lg)",
           background: scrollAtTop
-            ? "linear-gradient(135deg, rgba(60, 30, 18, 0.72), rgba(24, 12, 7, 0.65))"
-            : "linear-gradient(135deg, rgba(60, 30, 18, 0.92), rgba(24, 12, 7, 0.92))",
+            ? "linear-gradient(135deg, rgba(36, 38, 60, 0.72), rgba(18, 19, 30, 0.65))"
+            : "linear-gradient(135deg, rgba(36, 38, 60, 0.92), rgba(18, 19, 30, 0.92))",
           border: "1px solid var(--app-border)",
           boxShadow: scrollAtTop
-            ? "0 18px 45px rgba(6, 3, 2, 0.35)"
-            : "0 24px 60px rgba(6, 3, 2, 0.55)",
+            ? "0 18px 45px rgba(7, 8, 15, 0.35)"
+            : "0 24px 60px rgba(7, 8, 15, 0.55)",
           backdropFilter: "blur(18px)",
           overflow: "hidden",
           clipPath: "inset(0 round var(--app-radius-lg))",
@@ -264,7 +264,7 @@ S - Skip onscreen markers (intro, credits, etc)
             height: 32,
             width: "auto",
             objectFit: "contain",
-            filter: "drop-shadow(0 6px 14px rgba(6, 3, 2, 0.4))",
+            filter: "drop-shadow(0 6px 14px rgba(7, 8, 15, 0.4))",
           }}
         />
 
@@ -619,12 +619,12 @@ function SearchBar() {
                       padding: "7px 10px",
 
                       "&:hover": {
-                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                      backgroundColor: "var(--app-accent-soft)",
                         transition: "all 0.2s ease-in-out",
                       },
 
                       ...(selectedIndex === index && {
-                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                      backgroundColor: "var(--app-accent-soft)",
                       }),
 
                       transition: "all 0.4s ease-in-out",
@@ -689,12 +689,12 @@ function SearchBar() {
                       padding: "7px 10px",
 
                       "&:hover": {
-                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                      backgroundColor: "var(--app-accent-soft)",
                         transition: "all 0.2s ease-in-out",
                       },
 
                       ...(selectedIndex === index && {
-                        backgroundColor: "rgba(227, 91, 53, 0.2)",
+                      backgroundColor: "var(--app-accent-soft)",
                       }),
 
                       transition: "all 0.4s ease-in-out",
@@ -803,11 +803,11 @@ function LibrariesDropdown({ libraries }: { libraries: Plex.LibarySection[] }) {
                   background: "transparent",
                 },
                 "&::-webkit-scrollbar-thumb": {
-                        background: "rgba(255, 218, 180, 0.25)",
+                        background: "rgba(184, 189, 219, 0.35)",
                         borderRadius: "2px",
                       },
                       "&::-webkit-scrollbar-thumb:hover": {
-                        background: "rgba(255, 218, 180, 0.45)",
+                        background: "rgba(184, 189, 219, 0.55)",
                       },
                     }}
                   >

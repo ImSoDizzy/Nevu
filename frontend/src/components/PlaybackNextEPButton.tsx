@@ -101,7 +101,7 @@ function PlaybackNextEPButton({
             "&:hover": {
               backgroundColor: "rgba(255,255,255,0.16)",
               transform: "translateY(-2px)",
-              boxShadow: "0 18px 34px rgba(8, 4, 2, 0.45)",
+              boxShadow: "0 18px 34px rgba(7, 8, 15, 0.45)",
             },
           }}
           variant="outlined"
@@ -123,21 +123,21 @@ function PlaybackNextEPButton({
         sx={{
           px: 3,
           py: 1.5,
-          backgroundColor: "rgba(20, 10, 6, 0.75)",
+          backgroundColor: "rgba(16, 17, 28, 0.75)",
           backdropFilter: "blur(20px)",
           border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
           color: "var(--app-ink)",
           "&:hover": {
-            backgroundColor: "rgba(20, 10, 6, 0.9)",
+            backgroundColor: "rgba(16, 17, 28, 0.9)",
             transform: "translateY(-2px)",
-            boxShadow: "0 18px 34px rgba(8, 4, 2, 0.45)",
+            boxShadow: "0 18px 34px rgba(7, 8, 15, 0.45)",
             border: `1px solid ${alpha(theme.palette.primary.main, 0.5)}`,
           },
         }}
         style={{
           background: `linear-gradient(90deg, 
           ${theme.palette.primary.main} ${progressPercentage}%, 
-          rgba(20, 10, 6, 0.75) ${progressPercentage}%)`,
+          rgba(16, 17, 28, 0.75) ${progressPercentage}%)`,
         }}
         variant="contained"
         onClick={handleNavigation}

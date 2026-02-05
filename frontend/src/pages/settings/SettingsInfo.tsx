@@ -97,9 +97,9 @@ function SettingsInfo() {
           sx={{
             mt: 5,
             p: 3,
-            bgcolor: "rgba(255, 218, 180, 0.08)",
+            bgcolor: "rgba(80, 70, 225, 0.12)",
             borderRadius: 2,
-            border: "1px solid rgba(255, 218, 180, 0.2)",
+            border: "1px solid rgba(80, 70, 225, 0.25)",
             textAlign: "center",
           }}
         >
