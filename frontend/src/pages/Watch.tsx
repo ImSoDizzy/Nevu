@@ -153,6 +153,11 @@ function Watch() {
     setControlElementsVisible(volumePopoverOpen || showTune);
   }, [volumePopoverOpen, showTune]);
 
+  const resetPlexPlaybackSession = () => {
+    generateSessionID();
+    sessionStorage.setItem("sessionID", uuidv4());
+  };
+
   const restartPlayback = (resumeTimeSeconds?: number) => {
     if (!metadata) return;
 
@@ -162,8 +167,7 @@ function Watch() {
       lastAppliedTime.current = Math.floor(resumeTime * 1000);
     }
 
-    generateSessionID();
-    sessionStorage.setItem("sessionID", uuidv4());
+    resetPlexPlaybackSession();
 
     setReady(false);
     setBuffering(true);
@@ -363,6 +367,19 @@ function Watch() {
       const { terminationCode, terminationText } =
         timelineUpdateData.MediaContainer;
       if (terminationCode) {
+        const currentPlaybackTime = player.current?.getCurrentTime() ?? 0;
+        if (
+          Number(terminationCode) === 2008 &&
+          playing &&
+          !buffering &&
+          currentPlaybackTime > 0
+        ) {
+          console.warn(
+            "Ignoring terminationCode 2008 while playback is actively progressing"
+          );
+          return;
+        }
+
         setShowError(`${terminationCode} - ${terminationText}`);
         setPlaying(false);
         if (!room || isHost) socket?.emit("EVNT_SYNC_PAUSE");
@@ -391,6 +408,7 @@ function Watch() {
       setReady(false);
 
       if (!itemID) return;
+      resetPlexPlaybackSession();
 
       const metadata = await getLibraryMeta(itemID);
 
