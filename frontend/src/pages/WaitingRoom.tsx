@@ -20,7 +20,7 @@ function WaitingRoom() {
 
     socket.once("RES_SYNC_RESYNC_PLAYBACK", (user, data: PerPlexed.Sync.PlayBackState) => {
       console.log("Playback resync received", data);
-      navigate(`/watch/${data.key}?t=${data.time}`);
+      navigate(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
     })
   }, [navigate, socket]);
 

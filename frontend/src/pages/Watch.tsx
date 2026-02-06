@@ -34,6 +34,7 @@ import {
   getIncludeProps,
   getXPlexProps,
   queryBuilder,
+  uuidv4,
 } from "../plex/QuickFunctions";
 import {
   ArrowBackIosNewRounded,
@@ -99,7 +100,7 @@ function Watch() {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const { sessionID } = useSessionStore();
+  const { sessionID, generateSessionID } = useSessionStore();
   const { settings } = useUserSettings();
 
   const [metadata, setMetadata] = useState<Plex.Metadata | null>(null);
@@ -140,6 +141,7 @@ function Watch() {
 
   const [buffering, setBuffering] = useState(false);
   const [showError, setShowError] = useState<string | false>(false);
+  const [playerInstanceKey, setPlayerInstanceKey] = useState(0);
 
   const { room, socket, isHost } = useSyncSessionState();
   const { open: syncInterfaceOpen, setOpen: setSyncInterfaceOpen } =
@@ -150,6 +152,34 @@ function Watch() {
   useEffect(() => {
     setControlElementsVisible(volumePopoverOpen || showTune);
   }, [volumePopoverOpen, showTune]);
+
+  const restartPlayback = (resumeTimeSeconds?: number) => {
+    if (!metadata) return;
+
+    const resumeTime = resumeTimeSeconds ?? player.current?.getCurrentTime() ?? 0;
+    if (resumeTime > 0) {
+      seekToAfterLoad.current = resumeTime;
+      lastAppliedTime.current = Math.floor(resumeTime * 1000);
+    }
+
+    generateSessionID();
+    sessionStorage.setItem("sessionID", uuidv4());
+
+    setReady(false);
+    setBuffering(true);
+    setPlaying(true);
+    setShowError(false);
+    setURL(getUrl(metadata, quality));
+    setPlayerInstanceKey((prev) => prev + 1);
+
+    if (room && isHost && itemID) {
+      socket?.emit("RES_SYNC_RESYNC_PLAYBACK", {
+        key: itemID,
+        state: "playing",
+        time: resumeTime,
+      } satisfies PerPlexed.Sync.PlayBackState);
+    }
+  };
 
   const loadMetadata = async (itemID: string) => {
     await getUniversalDecision(itemID, {
@@ -266,7 +296,7 @@ function Watch() {
 
     const resyncPlayback = async (data: PerPlexed.Sync.PlayBackState) => {
       if (data.key !== itemID) {
-        navigate(`/watch/${data.key}?t=${data.time}`);
+        navigate(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
         return;
       }
 
@@ -335,14 +365,14 @@ function Watch() {
       if (terminationCode) {
         setShowError(`${terminationCode} - ${terminationText}`);
         setPlaying(false);
-        socket?.emit("EVNT_SYNC_PAUSE");
+        if (!room || isHost) socket?.emit("EVNT_SYNC_PAUSE");
       }
     };
 
     const updateInterval = setInterval(updateTimeline, 5000);
 
     return () => clearInterval(updateInterval);
-  }, [buffering, itemID, playing, socket]);
+  }, [buffering, isHost, itemID, playing, room, socket]);
 
   useEffect(() => {
     // set css style for .ui-video-seek-slider .track .main .connect
@@ -629,19 +659,7 @@ function Watch() {
               variant="outlined"
               color="primary"
               onClick={() => {
-                setShowError(false);
-
-                // If the video is already 5 seconds in, reload the page with the current time
-                if (player.current?.getCurrentTime() ?? 0 > 5) {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set(
-                    "t",
-                    Math.floor(
-                      (player.current?.getCurrentTime() ?? 0) * 1000
-                    ).toString()
-                  );
-                  window.location.href = url.toString();
-                } else window.location.reload();
+                restartPlayback(player.current?.getCurrentTime() ?? 0);
               }}
             >
               Reload
@@ -2040,6 +2058,7 @@ function Watch() {
               </Fade>
 
               <ReactPlayer
+                key={`${itemID ?? "watch"}-${playerInstanceKey}`}
                 ref={player}
                 playing={playing}
                 volume={volume / 100}
@@ -2071,20 +2090,25 @@ function Watch() {
                   setReady(true);
 
                   if (seekToAfterLoad.current !== null) {
-                    player.current.seekTo(seekToAfterLoad.current);
+                    const seekTo = seekToAfterLoad.current;
+                    player.current.seekTo(seekTo);
+                    lastAppliedTime.current = Math.floor(seekTo * 1000);
                     seekToAfterLoad.current = null;
+                    return;
                   }
 
                   const seekTo = params.has("t")
-                    ? parseInt(params.get("t") as string)
+                    ? parseInt(params.get("t") as string, 10)
                     : (metadata?.viewOffset && metadata?.viewOffset > 5
                         ? metadata?.viewOffset
                         : null) ?? null;
 
-                  if (!seekTo) return;
-                  if (lastAppliedTime.current === seekTo) return;
-                  player.current.seekTo(seekTo / 1000);
-                  lastAppliedTime.current = seekTo;
+                  if (!seekTo || Number.isNaN(seekTo)) return;
+                  const seekMs = seekTo < 10000 ? seekTo * 1000 : seekTo;
+
+                  if (lastAppliedTime.current === seekMs) return;
+                  player.current.seekTo(seekMs / 1000);
+                  lastAppliedTime.current = seekMs;
                 }}
                 onProgress={(progress) => {
                   setProgress(progress.playedSeconds);
@@ -2108,7 +2132,7 @@ function Watch() {
                   // window.location.reload();
 
                   setPlaying(false);
-                  socket?.emit("EVNT_SYNC_PAUSE");
+                  if (!room || isHost) socket?.emit("EVNT_SYNC_PAUSE");
                   if (showError) return;
 
                   // filter out links from the error messages

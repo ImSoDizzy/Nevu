@@ -114,7 +114,7 @@ function SocketManager(navigate: NavigateFunction | undefined) {
     {
         socket.on("RES_SYNC_SET_PLAYBACK", (user: PerPlexed.Sync.Member, data: PerPlexed.Sync.PlayBackState) => {
             console.log("Playback state received", data);
-            navigate?.(`/watch/${data.key}?t=${data.time}`);
+            navigate?.(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
             useToast.getState().addToast(user, "PlaySet", "Started Playback", 5000);
         });
 
