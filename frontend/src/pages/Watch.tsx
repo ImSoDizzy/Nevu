@@ -129,7 +129,8 @@ function Watch() {
   const [progress, setProgress] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const lastProgressValueRef = useRef(0);
-  const lastProgressUpdateAtRef = useRef(Date.now());
+  const lastAutoPauseEmitAtRef = useRef(0);
+  const lastPauseTimeoutRecoveryAtRef = useRef(0);
 
   const [volumePopoverAnchor, setVolumePopoverAnchor] =
     useState<HTMLButtonElement | null>(null);
@@ -160,7 +161,7 @@ function Watch() {
     sessionStorage.setItem("sessionID", uuidv4());
   };
 
-  const shouldIgnorePausedTooLongError = (
+  const isPausedTooLongPlexError = (
     terminationCode?: number | string | null,
     rawMessage?: string | null
   ) => {
@@ -168,12 +169,49 @@ function Watch() {
     const hasCode2008 =
       Number(terminationCode) === 2008 || /\b2008\b/.test(message);
     const hasPausedTooLongText = /paused for too long/i.test(message);
-    if (!hasCode2008 && !hasPausedTooLongText) return false;
+    return hasCode2008 || hasPausedTooLongText;
+  };
 
-    const currentPlaybackTime = player.current?.getCurrentTime() ?? 0;
-    const progressAge = Date.now() - lastProgressUpdateAtRef.current;
-    const isActivelyAdvancing = currentPlaybackTime > 0 && progressAge <= 15000;
-    return isActivelyAdvancing;
+  const emitAutomaticSyncPause = (source: string) => {
+    if (room && !isHost) return;
+
+    const now = Date.now();
+    if (now - lastAutoPauseEmitAtRef.current < 10000) {
+      console.warn(`Suppressing repeated EVNT_SYNC_PAUSE from ${source}`);
+      return;
+    }
+
+    lastAutoPauseEmitAtRef.current = now;
+    socket?.emit("EVNT_SYNC_PAUSE");
+  };
+
+  const recoverFromPausedTooLong = (
+    source: "timeline" | "player",
+    terminationCode?: number | string | null,
+    rawMessage?: string | null
+  ) => {
+    if (!isPausedTooLongPlexError(terminationCode, rawMessage)) return false;
+
+    const now = Date.now();
+    if (now - lastPauseTimeoutRecoveryAtRef.current < 30000) {
+      console.warn(`Suppressing repeated 2008 recovery from ${source}`);
+      return true;
+    }
+
+    lastPauseTimeoutRecoveryAtRef.current = now;
+
+    // Participant-side 2008 should not control room-wide playback state.
+    if (room && !isHost) {
+      console.warn(
+        `Ignoring participant-side 2008 from ${source}; awaiting host sync state`
+      );
+      return true;
+    }
+
+    const resumeTime = player.current?.getCurrentTime() ?? lastProgressValueRef.current;
+    console.warn(`Recovering from 2008 via playback restart from ${source}`);
+    restartPlayback(resumeTime > 0 ? resumeTime : undefined);
+    return true;
   };
 
   const restartPlayback = (resumeTimeSeconds?: number) => {
@@ -194,7 +232,6 @@ function Watch() {
     setURL(getUrl(metadata, quality));
     setPlayerInstanceKey((prev) => prev + 1);
     lastProgressValueRef.current = resumeTime;
-    lastProgressUpdateAtRef.current = Date.now();
 
     if (room && isHost && itemID) {
       socket?.emit("RES_SYNC_RESYNC_PLAYBACK", {
@@ -388,23 +425,20 @@ function Watch() {
       const { terminationCode, terminationText } =
         timelineUpdateData.MediaContainer;
       if (terminationCode) {
-        if (shouldIgnorePausedTooLongError(terminationCode, terminationText)) {
-          console.warn(
-            "Ignoring terminationCode 2008 while playback is actively progressing"
-          );
+        if (recoverFromPausedTooLong("timeline", terminationCode, terminationText))
           return;
-        }
+        if (showError) return;
 
         setShowError(`${terminationCode} - ${terminationText}`);
         setPlaying(false);
-        if (!room || isHost) socket?.emit("EVNT_SYNC_PAUSE");
+        emitAutomaticSyncPause("timeline");
       }
     };
 
     const updateInterval = setInterval(updateTimeline, 5000);
 
     return () => clearInterval(updateInterval);
-  }, [isHost, itemID, playing, room, socket]);
+  }, [isHost, itemID, playing, room, showError, socket]);
 
   useEffect(() => {
     // set css style for .ui-video-seek-slider .track .main .connect
@@ -2149,7 +2183,6 @@ function Watch() {
 
                   if (progress.playedSeconds > lastProgressValueRef.current + 0.25) {
                     lastProgressValueRef.current = progress.playedSeconds;
-                    lastProgressUpdateAtRef.current = Date.now();
                   }
                 }}
                 onPause={() => {
@@ -2176,16 +2209,12 @@ function Watch() {
                     err?.error?.toString?.() ??
                     "";
 
-                  if (shouldIgnorePausedTooLongError(undefined, rawMessage)) {
-                    console.warn(
-                      "Ignoring player 2008 error while playback is actively progressing"
-                    );
+                  if (recoverFromPausedTooLong("player", undefined, rawMessage))
                     return;
-                  }
+                  if (showError) return;
 
                   setPlaying(false);
-                  if (!room || isHost) socket?.emit("EVNT_SYNC_PAUSE");
-                  if (showError) return;
+                  emitAutomaticSyncPause("player");
 
                   // filter out links from the error messages
                   if (!rawMessage) return;

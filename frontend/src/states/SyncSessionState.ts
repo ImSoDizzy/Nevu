@@ -101,6 +101,18 @@ function SocketManager(navigate: NavigateFunction | undefined) {
     const { socket, isHost } = useSyncSessionState.getState();
     if (socket === null) return;
 
+    let lastPlaybackToastKey = "";
+    let lastPlaybackToastAt = 0;
+    const shouldThrottlePlaybackToast = (key: string, windowMs = 2000) => {
+        const now = Date.now();
+        if (lastPlaybackToastKey === key && (now - lastPlaybackToastAt) < windowMs) {
+            return true;
+        }
+
+        lastPlaybackToastKey = key;
+        lastPlaybackToastAt = now;
+        return false;
+    };
 
     if (isHost) 
     {
@@ -129,12 +141,16 @@ function SocketManager(navigate: NavigateFunction | undefined) {
     }
 
     socket.on("EVNT_SYNC_PAUSE", (user: PerPlexed.Sync.Member) => {
-        useToast.getState().addToast(user, "Pause", "Paused Playback", 5000);
+        if (!shouldThrottlePlaybackToast(`pause:${user.uid}`)) {
+            useToast.getState().addToast(user, "Pause", "Paused Playback", 5000);
+        }
         SessionStateEmitter.emit("PLAYBACK_PAUSE");
     })
 
     socket.on("EVNT_SYNC_RESUME", (user: PerPlexed.Sync.Member) => {
-        useToast.getState().addToast(user, "Play", "Resumed Playback", 5000);
+        if (!shouldThrottlePlaybackToast(`resume:${user.uid}`)) {
+            useToast.getState().addToast(user, "Play", "Resumed Playback", 5000);
+        }
         SessionStateEmitter.emit("PLAYBACK_RESUME");
     })
 
