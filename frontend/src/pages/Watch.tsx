@@ -128,6 +128,8 @@ function Watch() {
   const seekToAfterLoad = useRef<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [buffered, setBuffered] = useState(0);
+  const lastProgressValueRef = useRef(0);
+  const lastProgressUpdateAtRef = useRef(Date.now());
 
   const [volumePopoverAnchor, setVolumePopoverAnchor] =
     useState<HTMLButtonElement | null>(null);
@@ -158,6 +160,22 @@ function Watch() {
     sessionStorage.setItem("sessionID", uuidv4());
   };
 
+  const shouldIgnorePausedTooLongError = (
+    terminationCode?: number | string | null,
+    rawMessage?: string | null
+  ) => {
+    const message = rawMessage ?? "";
+    const hasCode2008 =
+      Number(terminationCode) === 2008 || /\b2008\b/.test(message);
+    const hasPausedTooLongText = /paused for too long/i.test(message);
+    if (!hasCode2008 && !hasPausedTooLongText) return false;
+
+    const currentPlaybackTime = player.current?.getCurrentTime() ?? 0;
+    const progressAge = Date.now() - lastProgressUpdateAtRef.current;
+    const isActivelyAdvancing = currentPlaybackTime > 0 && progressAge <= 15000;
+    return isActivelyAdvancing;
+  };
+
   const restartPlayback = (resumeTimeSeconds?: number) => {
     if (!metadata) return;
 
@@ -175,6 +193,8 @@ function Watch() {
     setShowError(false);
     setURL(getUrl(metadata, quality));
     setPlayerInstanceKey((prev) => prev + 1);
+    lastProgressValueRef.current = resumeTime;
+    lastProgressUpdateAtRef.current = Date.now();
 
     if (room && isHost && itemID) {
       socket?.emit("RES_SYNC_RESYNC_PLAYBACK", {
@@ -355,10 +375,11 @@ function Watch() {
 
     const updateTimeline = async () => {
       if (!player.current) return;
+      const timelineState = playing ? "playing" : "paused";
       const timelineUpdateData = await getTimelineUpdate(
         parseInt(itemID),
         Math.floor(player.current.getDuration()) * 1000,
-        buffering ? "buffering" : playing ? "playing" : "paused",
+        timelineState,
         Math.floor(player.current.getCurrentTime()) * 1000
       );
 
@@ -367,13 +388,7 @@ function Watch() {
       const { terminationCode, terminationText } =
         timelineUpdateData.MediaContainer;
       if (terminationCode) {
-        const currentPlaybackTime = player.current?.getCurrentTime() ?? 0;
-        if (
-          Number(terminationCode) === 2008 &&
-          playing &&
-          !buffering &&
-          currentPlaybackTime > 0
-        ) {
+        if (shouldIgnorePausedTooLongError(terminationCode, terminationText)) {
           console.warn(
             "Ignoring terminationCode 2008 while playback is actively progressing"
           );
@@ -389,7 +404,7 @@ function Watch() {
     const updateInterval = setInterval(updateTimeline, 5000);
 
     return () => clearInterval(updateInterval);
-  }, [buffering, isHost, itemID, playing, room, socket]);
+  }, [isHost, itemID, playing, room, socket]);
 
   useEffect(() => {
     // set css style for .ui-video-seek-slider .track .main .connect
@@ -2131,12 +2146,18 @@ function Watch() {
                 onProgress={(progress) => {
                   setProgress(progress.playedSeconds);
                   setBuffered(progress.loadedSeconds);
+
+                  if (progress.playedSeconds > lastProgressValueRef.current + 0.25) {
+                    lastProgressValueRef.current = progress.playedSeconds;
+                    lastProgressUpdateAtRef.current = Date.now();
+                  }
                 }}
                 onPause={() => {
                   setPlaying(false);
                 }}
                 onPlay={() => {
                   setPlaying(true);
+                  setBuffering(false);
                 }}
                 onBuffer={() => {
                   setBuffering(true);
@@ -2149,13 +2170,26 @@ function Watch() {
                   console.error(err);
                   // window.location.reload();
 
+                  const rawMessage =
+                    err?.error?.message ??
+                    err?.message ??
+                    err?.error?.toString?.() ??
+                    "";
+
+                  if (shouldIgnorePausedTooLongError(undefined, rawMessage)) {
+                    console.warn(
+                      "Ignoring player 2008 error while playback is actively progressing"
+                    );
+                    return;
+                  }
+
                   setPlaying(false);
                   if (!room || isHost) socket?.emit("EVNT_SYNC_PAUSE");
                   if (showError) return;
 
                   // filter out links from the error messages
-                  if (!err.error) return;
-                  const message = err.error.message.replace(
+                  if (!rawMessage) return;
+                  const message = rawMessage.replace(
                     /https?:\/\/[^\s]+/g,
                     "Media"
                   );
