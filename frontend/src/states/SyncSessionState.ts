@@ -60,7 +60,13 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
 
   connect: async (room, navigate) => {
     const current = get().socket;
-    if (current) current.disconnect();
+    if (current) {
+      (
+        current as Socket & { __manualDisconnect?: boolean }
+      ).__manualDisconnect = true;
+      current.removeAllListeners();
+      current.disconnect();
+    }
 
     return new Promise<true | PerPlexed.WatchTogether.SocketError>((resolve) => {
       const socket = isDev
@@ -83,6 +89,9 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
             autoConnect: false,
           });
 
+      (socket as Socket & { __manualDisconnect?: boolean }).__manualDisconnect =
+        false;
+
       set({
         ...resetSyncSessionState(),
         status: "connecting",
@@ -96,7 +105,15 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
         resolve(result);
       };
 
-      socket.once("wt:room:ready", (data: PerPlexed.WatchTogether.Ready) => {
+      socket.on("wt:room:ready", (data: PerPlexed.WatchTogether.Ready) => {
+        const manager = socket.io as { opts?: { query?: Record<string, string> } };
+        if (manager?.opts) {
+          manager.opts.query = {
+            ...(manager.opts.query ?? {}),
+            room: data.room,
+          };
+        }
+
         set({
           socket,
           status: "connected",
@@ -108,15 +125,6 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
         });
 
         resolveOnce(true);
-      });
-
-      socket.once("wt:room:error", (data: PerPlexed.WatchTogether.SocketError) => {
-        set({
-          ...resetSyncSessionState(),
-          lastError: data,
-        });
-
-        resolveOnce(data);
       });
 
       setTimeout(() => {
@@ -143,13 +151,24 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
       socket.on("disconnect", () => {
         console.log("Watch Together disconnected from server");
 
-        set((state) => {
-          const keepError = state.lastError;
-          return {
+        const intentional =
+          (socket as Socket & { __manualDisconnect?: boolean })
+            .__manualDisconnect === true;
+
+        if (intentional) {
+          set((state) => ({
             ...resetSyncSessionState(),
-            lastError: keepError,
-          };
-        });
+            lastError: state.lastError,
+          }));
+          return;
+        }
+
+        set((state) => ({
+          ...state,
+          status: "connecting",
+          socket,
+          members: {},
+        }));
       });
 
       socket.on("wt:member:joined", (member: PerPlexed.WatchTogether.Member) => {
@@ -182,12 +201,20 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
 
       socket.on("wt:state:update", (update: PerPlexed.WatchTogether.StateUpdate) => {
         set((state) => {
-          if (update.seq <= state.playbackSeq) return state;
-
           const previous = state.playback;
-          const actor = update.actor;
+          const previousUpdatedAt = previous?.updatedAtMs ?? 0;
+          if (update.seq < state.playbackSeq) return state;
+          if (
+            update.seq === state.playbackSeq &&
+            update.playback.updatedAtMs <= previousUpdatedAt
+          ) {
+            return state;
+          }
 
-          if (actor && previous) {
+          const actor = update.actor;
+          const isNewActionSequence = update.seq > state.playbackSeq;
+
+          if (actor && previous && isNewActionSequence) {
             const mediaChanged = previous.key !== update.playback.key;
             const modeChanged = previous.state !== update.playback.state;
 
@@ -211,15 +238,19 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
 
           return {
             playback: update.playback,
-            playbackSeq: update.seq,
+            playbackSeq: Math.max(state.playbackSeq, update.seq),
           };
         });
       });
 
       socket.on("wt:room:error", (error: PerPlexed.WatchTogether.SocketError) => {
         set({ lastError: error });
+        resolveOnce(error);
 
         if (error.type === "host_disconnect") {
+          (
+            socket as Socket & { __manualDisconnect?: boolean }
+          ).__manualDisconnect = true;
           socket.disconnect();
           navigate?.("/");
         }
@@ -232,6 +263,9 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
   disconnect: () => {
     const socket = get().socket;
     if (socket) {
+      (
+        socket as Socket & { __manualDisconnect?: boolean }
+      ).__manualDisconnect = true;
       socket.emit("wt:room:leave");
       socket.disconnect();
     }
@@ -242,7 +276,9 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
   },
 
   requestState: () => {
-    get().socket?.emit("wt:state:request");
+    const socket = get().socket;
+    socket?.emit("wt:heartbeat");
+    socket?.emit("wt:state:request");
   },
 
   sendControl: (control) => {

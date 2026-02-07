@@ -130,7 +130,7 @@ function Watch() {
   const recoveryWindowStartedAtRef = useRef(0);
   const recoveryAttemptCountRef = useRef(0);
   const recoveryInFlightRef = useRef(false);
-  const lastHandledSyncSeqRef = useRef(0);
+  const lastHandledPlaybackVersionRef = useRef("");
   const lastAnnouncedPlaybackRef = useRef("");
 
   const [volumePopoverAnchor, setVolumePopoverAnchor] =
@@ -168,6 +168,20 @@ function Watch() {
   const resetPlexPlaybackSession = () => {
     generateSessionID();
     sessionStorage.setItem("sessionID", uuidv4());
+  };
+
+  const reportStoppedTimeline = () => {
+    if (!itemID || !player.current) return;
+
+    const durationMs = Math.floor((player.current.getDuration() ?? 0) * 1000);
+    const timeMs = Math.floor((player.current.getCurrentTime() ?? 0) * 1000);
+    if (Number.isNaN(durationMs) || Number.isNaN(timeMs)) return;
+
+    void getTimelineUpdate(parseInt(itemID, 10), durationMs, "stopped", timeMs).catch(
+      (err) => {
+        console.warn("Failed to report stopped timeline before restart", err);
+      }
+    );
   };
 
   const isPausedTooLongPlexError = (
@@ -279,6 +293,7 @@ function Watch() {
       lastAppliedTime.current = Math.floor(resumeTime * 1000);
     }
 
+    reportStoppedTimeline();
     resetPlexPlaybackSession();
 
     setReady(false);
@@ -289,7 +304,7 @@ function Watch() {
     setPlayerInstanceKey((prev) => prev + 1);
     lastProgressValueRef.current = resumeTime;
 
-    if (room && itemID) {
+    if (room && itemID && isHost) {
       sendWatchTogetherPlaybackControl("setMedia", {
         mediaKey: itemID,
         positionSeconds: resumeTime,
@@ -423,16 +438,34 @@ function Watch() {
 
   useEffect(() => {
     if (!room) {
-      lastHandledSyncSeqRef.current = 0;
+      lastHandledPlaybackVersionRef.current = "";
       lastAnnouncedPlaybackRef.current = "";
       return;
     }
 
     requestWatchTogetherState();
+    const interval = setInterval(() => {
+      requestWatchTogetherState();
+    }, 5000);
+
+    const onVisibilityRefresh = () => {
+      if (document.visibilityState === "visible") {
+        requestWatchTogetherState();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityRefresh);
+    window.addEventListener("focus", onVisibilityRefresh);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityRefresh);
+      window.removeEventListener("focus", onVisibilityRefresh);
+    };
   }, [requestWatchTogetherState, room, itemID]);
 
   useEffect(() => {
-    if (!room || !itemID || !ready) return;
+    if (!room || !itemID || !ready || !isHost) return;
 
     const playbackIdentity = `${itemID}:${playerInstanceKey}`;
     if (lastAnnouncedPlaybackRef.current === playbackIdentity) return;
@@ -443,13 +476,14 @@ function Watch() {
       positionSeconds: player.current?.getCurrentTime() ?? 0,
       state: playing ? "playing" : "paused",
     });
-  }, [itemID, playerInstanceKey, playing, ready, room]);
+  }, [isHost, itemID, playerInstanceKey, playing, ready, room]);
 
   useEffect(() => {
     if (!room || !watchTogetherPlayback) return;
-    if (playbackSeq <= lastHandledSyncSeqRef.current) return;
+    const playbackVersion = `${playbackSeq}:${watchTogetherPlayback.updatedAtMs}:${watchTogetherPlayback.key ?? "none"}:${watchTogetherPlayback.state}`;
+    if (playbackVersion === lastHandledPlaybackVersionRef.current) return;
 
-    lastHandledSyncSeqRef.current = playbackSeq;
+    lastHandledPlaybackVersionRef.current = playbackVersion;
 
     if (!watchTogetherPlayback.key) {
       if (!isHost) navigate("/sync/waitingroom");
@@ -458,7 +492,7 @@ function Watch() {
 
     if (watchTogetherPlayback.key !== itemID) {
       navigate(
-        `/watch/${watchTogetherPlayback.key}?t=${Math.floor(
+        `/watch/${watchTogetherPlayback.key}?tms=${Math.floor(
           watchTogetherPlayback.positionMs
         )}`
       );
@@ -468,7 +502,9 @@ function Watch() {
     const targetSeconds = watchTogetherPlayback.positionMs / 1000;
     const currentSeconds = player.current?.getCurrentTime() ?? 0;
     const drift = absoluteDifference(currentSeconds, targetSeconds);
-    if (drift > 2) {
+    const maxDriftSeconds =
+      watchTogetherPlayback.state === "paused" ? 0.35 : 1.5;
+    if (drift > maxDriftSeconds) {
       player.current?.seekTo(targetSeconds, "seconds");
     }
 
@@ -487,7 +523,12 @@ function Watch() {
 
     const updateTimeline = async () => {
       if (!player.current) return;
-      const timelineState = playing ? "playing" : "paused";
+      const timelineState =
+        room && watchTogetherPlayback?.state
+          ? watchTogetherPlayback.state
+          : playing
+            ? "playing"
+            : "paused";
       const timelineUpdateData = await getTimelineUpdate(
         parseInt(itemID),
         Math.floor(player.current.getDuration()) * 1000,
@@ -512,7 +553,7 @@ function Watch() {
     const updateInterval = setInterval(updateTimeline, 5000);
 
     return () => clearInterval(updateInterval);
-  }, [itemID, playing, room, showError]);
+  }, [itemID, playing, room, showError, watchTogetherPlayback?.state]);
 
   useEffect(() => {
     // set css style for .ui-video-seek-slider .track .main .connect
@@ -2237,14 +2278,27 @@ function Watch() {
                     return;
                   }
 
-                  const seekTo = params.has("t")
+                  const seekToMsFromQuery = params.has("tms")
+                    ? parseInt(params.get("tms") as string, 10)
+                    : null;
+                  const seekToLegacy = params.has("t")
                     ? parseInt(params.get("t") as string, 10)
-                    : (metadata?.viewOffset && metadata?.viewOffset > 5
-                        ? metadata?.viewOffset
-                        : null) ?? null;
+                    : null;
 
-                  if (!seekTo || Number.isNaN(seekTo)) return;
-                  const seekMs = seekTo < 10000 ? seekTo * 1000 : seekTo;
+                  const seekMs =
+                    (typeof seekToMsFromQuery === "number" &&
+                    !Number.isNaN(seekToMsFromQuery)
+                      ? seekToMsFromQuery
+                      : typeof seekToLegacy === "number" &&
+                          !Number.isNaN(seekToLegacy)
+                        ? seekToLegacy < 10000
+                          ? seekToLegacy * 1000
+                          : seekToLegacy
+                        : metadata?.viewOffset && metadata?.viewOffset > 5
+                          ? metadata.viewOffset
+                          : null) ?? null;
+
+                  if (!seekMs || Number.isNaN(seekMs)) return;
 
                   if (lastAppliedTime.current === seekMs) return;
                   player.current.seekTo(seekMs / 1000);
@@ -2261,9 +2315,19 @@ function Watch() {
                   }
                 }}
                 onPause={() => {
+                  if (room) {
+                    requestWatchTogetherState();
+                    return;
+                  }
                   setPlaying(false);
                 }}
                 onPlay={() => {
+                  if (room) {
+                    setBuffering(false);
+                    requestWatchTogetherState();
+                    return;
+                  }
+
                   setPlaying(true);
                   setBuffering(false);
                 }}

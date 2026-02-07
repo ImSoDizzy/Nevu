@@ -18,11 +18,16 @@ function WaitingRoom() {
   useEffect(() => {
     if (!room) return;
     requestState();
+    const interval = setInterval(() => {
+      requestState();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [requestState, room]);
 
   useEffect(() => {
     if (!room || !playback?.key) return;
-    navigate(`/watch/${playback.key}?t=${Math.floor(playback.positionMs)}`);
+    navigate(`/watch/${playback.key}?tms=${Math.floor(playback.positionMs)}`);
   }, [navigate, playback?.key, playback?.positionMs, room]);
 
   return (
