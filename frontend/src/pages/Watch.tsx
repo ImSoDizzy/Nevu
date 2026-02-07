@@ -53,10 +53,7 @@ import { VideoSeekSlider } from "react-video-seek-slider";
 import "react-video-seek-slider/styles.css";
 import { useSessionStore } from "../states/SessionState";
 import { durationToText } from "../components/MovieItemSlider";
-import {
-  SessionStateEmitter,
-  useSyncSessionState,
-} from "../states/SyncSessionState";
+import { useSyncSessionState } from "../states/SyncSessionState";
 import { useSyncInterfaceState } from "../components/PerPlexedSync";
 import { absoluteDifference } from "../common/NumberExtra";
 import WatchShowChildView from "../components/WatchShowChildView";
@@ -129,8 +126,12 @@ function Watch() {
   const [progress, setProgress] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const lastProgressValueRef = useRef(0);
-  const lastAutoPauseEmitAtRef = useRef(0);
-  const lastPauseTimeoutRecoveryAtRef = useRef(0);
+  const recoveryTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const recoveryWindowStartedAtRef = useRef(0);
+  const recoveryAttemptCountRef = useRef(0);
+  const recoveryInFlightRef = useRef(false);
+  const lastHandledSyncSeqRef = useRef(0);
+  const lastAnnouncedPlaybackRef = useRef("");
 
   const [volumePopoverAnchor, setVolumePopoverAnchor] =
     useState<HTMLButtonElement | null>(null);
@@ -146,7 +147,15 @@ function Watch() {
   const [showError, setShowError] = useState<string | false>(false);
   const [playerInstanceKey, setPlayerInstanceKey] = useState(0);
 
-  const { room, socket, isHost } = useSyncSessionState();
+  const {
+    room,
+    isHost,
+    playback: watchTogetherPlayback,
+    playbackSeq,
+    requestState: requestWatchTogetherState,
+    sendControl: sendWatchTogetherControl,
+    disconnect: disconnectWatchTogether,
+  } = useSyncSessionState();
   const { open: syncInterfaceOpen, setOpen: setSyncInterfaceOpen } =
     useSyncInterfaceState();
 
@@ -172,45 +181,92 @@ function Watch() {
     return hasCode2008 || hasPausedTooLongText;
   };
 
-  const emitAutomaticSyncPause = (source: string) => {
-    if (room && !isHost) return;
-
-    const now = Date.now();
-    if (now - lastAutoPauseEmitAtRef.current < 10000) {
-      console.warn(`Suppressing repeated EVNT_SYNC_PAUSE from ${source}`);
-      return;
+  const sendWatchTogetherPlaybackControl = (
+    actionType: PerPlexed.WatchTogether.ControlActionType,
+    options?: {
+      mediaKey?: string;
+      positionSeconds?: number;
+      state?: PerPlexed.WatchTogether.PlaybackMode;
     }
+  ) => {
+    if (!room) return false;
 
-    lastAutoPauseEmitAtRef.current = now;
-    socket?.emit("EVNT_SYNC_PAUSE");
+    const mediaKey = options?.mediaKey ?? itemID ?? undefined;
+    const positionMs =
+      typeof options?.positionSeconds === "number"
+        ? Math.max(0, Math.floor(options.positionSeconds * 1000))
+        : undefined;
+
+    return sendWatchTogetherControl({
+      actionType,
+      mediaKey,
+      positionMs,
+      state: options?.state,
+    });
   };
 
-  const recoverFromPausedTooLong = (
+  const queueAutomaticRecovery = (
     source: "timeline" | "player",
     terminationCode?: number | string | null,
     rawMessage?: string | null
   ) => {
-    if (!isPausedTooLongPlexError(terminationCode, rawMessage)) return false;
+    if (!room) return false;
 
     const now = Date.now();
-    if (now - lastPauseTimeoutRecoveryAtRef.current < 30000) {
-      console.warn(`Suppressing repeated 2008 recovery from ${source}`);
-      return true;
+    if (
+      recoveryWindowStartedAtRef.current === 0 ||
+      now - recoveryWindowStartedAtRef.current > 60000
+    ) {
+      recoveryWindowStartedAtRef.current = now;
+      recoveryAttemptCountRef.current = 0;
     }
 
-    lastPauseTimeoutRecoveryAtRef.current = now;
-
-    // Participant-side 2008 should not control room-wide playback state.
-    if (room && !isHost) {
+    if (recoveryAttemptCountRef.current >= 3) {
       console.warn(
-        `Ignoring participant-side 2008 from ${source}; awaiting host sync state`
+        `Watch Together recovery exhausted after ${recoveryAttemptCountRef.current} attempts`
       );
+
+      if (isHost) {
+        sendWatchTogetherPlaybackControl("end");
+      }
+
+      navigate("/sync/waitingroom");
       return true;
     }
 
-    const resumeTime = player.current?.getCurrentTime() ?? lastProgressValueRef.current;
-    console.warn(`Recovering from 2008 via playback restart from ${source}`);
-    restartPlayback(resumeTime > 0 ? resumeTime : undefined);
+    if (recoveryInFlightRef.current) {
+      console.warn(`Recovery already in progress for ${source}`);
+      return true;
+    }
+
+    recoveryAttemptCountRef.current += 1;
+    recoveryInFlightRef.current = true;
+
+    const isPausedTooLong = isPausedTooLongPlexError(
+      terminationCode,
+      rawMessage
+    );
+    if (isPausedTooLong) {
+      console.warn(`Paused-too-long error detected from ${source}; auto-recovering`);
+    }
+
+    const delayMs = Math.min(
+      4000,
+      1000 * Math.pow(2, recoveryAttemptCountRef.current - 1)
+    );
+
+    if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+    recoveryTimerRef.current = setTimeout(() => {
+      const resumeTime =
+        player.current?.getCurrentTime() ?? lastProgressValueRef.current;
+
+      console.warn(
+        `Attempting Watch Together recovery from ${source} (attempt ${recoveryAttemptCountRef.current})`
+      );
+      restartPlayback(resumeTime > 0 ? resumeTime : undefined);
+      recoveryInFlightRef.current = false;
+    }, delayMs);
+
     return true;
   };
 
@@ -233,14 +289,44 @@ function Watch() {
     setPlayerInstanceKey((prev) => prev + 1);
     lastProgressValueRef.current = resumeTime;
 
-    if (room && isHost && itemID) {
-      socket?.emit("RES_SYNC_RESYNC_PLAYBACK", {
-        key: itemID,
+    if (room && itemID) {
+      sendWatchTogetherPlaybackControl("setMedia", {
+        mediaKey: itemID,
+        positionSeconds: resumeTime,
         state: "playing",
-        time: resumeTime,
-      } satisfies PerPlexed.Sync.PlayBackState);
+      });
     }
   };
+
+  const syncPlay = (positionSeconds?: number) => {
+    sendWatchTogetherPlaybackControl("play", {
+      positionSeconds:
+        positionSeconds ?? player.current?.getCurrentTime() ?? undefined,
+    });
+  };
+
+  const syncPause = (positionSeconds?: number) => {
+    sendWatchTogetherPlaybackControl("pause", {
+      positionSeconds:
+        positionSeconds ?? player.current?.getCurrentTime() ?? undefined,
+    });
+  };
+
+  const syncSeek = (positionSeconds: number) => {
+    sendWatchTogetherPlaybackControl("seek", {
+      positionSeconds,
+    });
+  };
+
+  const syncEndPlayback = () => {
+    sendWatchTogetherPlaybackControl("end");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+    };
+  }, []);
 
   const loadMetadata = async (itemID: string) => {
     await getUniversalDecision(itemID, {
@@ -330,82 +416,71 @@ function Watch() {
       await sendUniversalPing();
     }, 10000);
 
-    if (itemID && isHost)
-      socket?.emit("RES_SYNC_SET_PLAYBACK", {
-        key: itemID,
-        state: playing ? "playing" : "paused",
-        time: player.current?.getCurrentTime() ?? 0,
-      } satisfies PerPlexed.Sync.PlayBackState);
-
     return () => {
       clearInterval(interval);
     };
-  }, [isHost, itemID, socket]);
+  }, [itemID]);
 
   useEffect(() => {
-    if (!socket || !room) return;
+    if (!room) {
+      lastHandledSyncSeqRef.current = 0;
+      lastAnnouncedPlaybackRef.current = "";
+      return;
+    }
 
-    const resyncInterval = setInterval(async () => {
-      if (!itemID || !socket || !isHost) return;
+    requestWatchTogetherState();
+  }, [requestWatchTogetherState, room, itemID]);
 
-      socket.emit("RES_SYNC_RESYNC_PLAYBACK", {
-        key: itemID,
-        state: playing ? "playing" : "paused",
-        time: player.current?.getCurrentTime() ?? 0,
-      } satisfies PerPlexed.Sync.PlayBackState);
-    }, 2500);
+  useEffect(() => {
+    if (!room || !itemID || !ready) return;
 
-    const resyncPlayback = async (data: PerPlexed.Sync.PlayBackState) => {
-      if (data.key !== itemID) {
-        navigate(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
-        return;
-      }
+    const playbackIdentity = `${itemID}:${playerInstanceKey}`;
+    if (lastAnnouncedPlaybackRef.current === playbackIdentity) return;
+    lastAnnouncedPlaybackRef.current = playbackIdentity;
 
-      if (data.time) {
-        const dif = absoluteDifference(
-          player.current?.getCurrentTime() ?? 0,
-          data.time
-        );
+    sendWatchTogetherPlaybackControl("setMedia", {
+      mediaKey: itemID,
+      positionSeconds: player.current?.getCurrentTime() ?? 0,
+      state: playing ? "playing" : "paused",
+    });
+  }, [itemID, playerInstanceKey, playing, ready, room]);
 
-        if (dif > 2) player.current?.seekTo(data.time, "seconds");
-      }
+  useEffect(() => {
+    if (!room || !watchTogetherPlayback) return;
+    if (playbackSeq <= lastHandledSyncSeqRef.current) return;
 
-      if (data.state === "playing") setPlaying(true);
-      if (data.state === "paused") setPlaying(false);
-    };
+    lastHandledSyncSeqRef.current = playbackSeq;
 
-    const endPlayback = async () => {
-      navigate("/sync/waitingroom");
-    };
+    if (!watchTogetherPlayback.key) {
+      if (!isHost) navigate("/sync/waitingroom");
+      return;
+    }
 
-    const pausePlayback = async () => {
-      setPlaying(false);
-    };
-    const resumePlayback = async () => {
-      setPlaying(true);
-    };
-    const seekPlayback = async (time: number) => {
-      player.current?.seekTo(time, "seconds");
-    };
+    if (watchTogetherPlayback.key !== itemID) {
+      navigate(
+        `/watch/${watchTogetherPlayback.key}?t=${Math.floor(
+          watchTogetherPlayback.positionMs
+        )}`
+      );
+      return;
+    }
 
-    if (!isHost) SessionStateEmitter.on("PLAYBACK_RESYNC", resyncPlayback);
-    if (!isHost) SessionStateEmitter.on("PLAYBACK_END", endPlayback);
+    const targetSeconds = watchTogetherPlayback.positionMs / 1000;
+    const currentSeconds = player.current?.getCurrentTime() ?? 0;
+    const drift = absoluteDifference(currentSeconds, targetSeconds);
+    if (drift > 2) {
+      player.current?.seekTo(targetSeconds, "seconds");
+    }
 
-    SessionStateEmitter.on("PLAYBACK_PAUSE", pausePlayback);
-    SessionStateEmitter.on("PLAYBACK_RESUME", resumePlayback);
-    SessionStateEmitter.on("PLAYBACK_SEEK", seekPlayback);
-
-    return () => {
-      SessionStateEmitter.off("PLAYBACK_RESYNC", resyncPlayback);
-      SessionStateEmitter.off("PLAYBACK_END", endPlayback);
-
-      SessionStateEmitter.off("PLAYBACK_PAUSE", pausePlayback);
-      SessionStateEmitter.off("PLAYBACK_RESUME", resumePlayback);
-      SessionStateEmitter.off("PLAYBACK_SEEK", seekPlayback);
-
-      clearInterval(resyncInterval);
-    };
-  }, [isHost, itemID, navigate, playing, room, socket]);
+    setPlaying(watchTogetherPlayback.state === "playing");
+  }, [
+    isHost,
+    itemID,
+    navigate,
+    playbackSeq,
+    room,
+    watchTogetherPlayback,
+  ]);
 
   useEffect(() => {
     if (!itemID) return;
@@ -425,20 +500,19 @@ function Watch() {
       const { terminationCode, terminationText } =
         timelineUpdateData.MediaContainer;
       if (terminationCode) {
-        if (recoverFromPausedTooLong("timeline", terminationCode, terminationText))
+        if (queueAutomaticRecovery("timeline", terminationCode, terminationText))
           return;
         if (showError) return;
 
         setShowError(`${terminationCode} - ${terminationText}`);
         setPlaying(false);
-        emitAutomaticSyncPause("timeline");
       }
     };
 
     const updateInterval = setInterval(updateTimeline, 5000);
 
     return () => clearInterval(updateInterval);
-  }, [isHost, itemID, playing, room, showError, socket]);
+  }, [itemID, playing, room, showError]);
 
   useEffect(() => {
     // set css style for .ui-video-seek-slider .track .main .connect
@@ -579,25 +653,27 @@ function Watch() {
       const actions: { [key: string]: () => void } = {
         " ": () =>
           setPlaying((state) => {
-            if (state) socket?.emit("EVNT_SYNC_PAUSE");
-            else socket?.emit("EVNT_SYNC_RESUME");
+            const currentTime = player.current?.getCurrentTime() ?? 0;
+            if (state) syncPause(currentTime);
+            else syncPlay(currentTime);
             return !state;
           }),
         k: () =>
           setPlaying((state) => {
-            if (state) socket?.emit("EVNT_SYNC_PAUSE");
-            else socket?.emit("EVNT_SYNC_RESUME");
+            const currentTime = player.current?.getCurrentTime() ?? 0;
+            if (state) syncPause(currentTime);
+            else syncPlay(currentTime);
             return !state;
           }),
         j: () => {
           const l = player.current?.getCurrentTime() ?? 0;
           player.current?.seekTo(l - 10);
-          socket?.emit("EVNT_SYNC_SEEK", l - 10);
+          syncSeek(l - 10);
         },
         l: () => {
           const l = player.current?.getCurrentTime() ?? 0;
           player.current?.seekTo(l + 10);
-          socket?.emit("EVNT_SYNC_SEEK", l + 10);
+          syncSeek(l + 10);
         },
         s: () => {
           if (!metadata || !player.current) return;
@@ -616,7 +692,9 @@ function Watch() {
               case "credits":
                 {
                   if (!marker.final) {
-                    player.current.seekTo(marker.endTimeOffset / 1000 + 1);
+                    const target = marker.endTimeOffset / 1000 + 1;
+                    player.current.seekTo(target);
+                    syncSeek(target);
                     return;
                   }
 
@@ -642,7 +720,11 @@ function Watch() {
                 }
                 break;
               case "intro":
-                player.current.seekTo(marker.endTimeOffset / 1000 + 1);
+                {
+                  const target = marker.endTimeOffset / 1000 + 1;
+                  player.current.seekTo(target);
+                  syncSeek(target);
+                }
                 break;
             }
           }
@@ -655,24 +737,24 @@ function Watch() {
         ArrowLeft: () => {
           const l = player.current?.getCurrentTime() ?? 0;
           player.current?.seekTo(l - 10);
-          socket?.emit("EVNT_SYNC_SEEK", l - 10);
+          syncSeek(l - 10);
         },
         ArrowRight: () => {
           const l = player.current?.getCurrentTime() ?? 0;
           player.current?.seekTo(l + 10);
-          socket?.emit("EVNT_SYNC_SEEK", l + 10);
+          syncSeek(l + 10);
         },
         ArrowUp: () => setVolume((state) => Math.min(state + 5, 100)),
         ArrowDown: () => setVolume((state) => Math.max(state - 5, 0)),
         ",": () => {
           const l = player.current?.getCurrentTime() ?? 0;
           player.current?.seekTo(l - 0.04);
-          socket?.emit("EVNT_SYNC_SEEK", l - 0.04);
+          syncSeek(l - 0.04);
         },
         ".": () => {
           const l = player.current?.getCurrentTime() ?? 0;
           player.current?.seekTo(l + 0.04);
-          socket?.emit("EVNT_SYNC_SEEK", l + 0.04);
+          syncSeek(l + 0.04);
         },
       };
 
@@ -683,7 +765,7 @@ function Watch() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [metadata, navigate, playQueue, socket]);
+  }, [metadata, navigate, playQueue, room]);
 
   return (
     <>
@@ -722,15 +804,6 @@ function Watch() {
               justifyContent: "center",
             }}
           >
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => {
-                restartPlayback(player.current?.getCurrentTime() ?? 0);
-              }}
-            >
-              Reload
-            </Button>
             <Button
               variant="outlined"
               color="secondary"
@@ -1485,7 +1558,6 @@ function Watch() {
                 mountOnEnter
                 unmountOnExit
                 in={
-                  (room ? isHost : true) &&
                   metadata.Marker &&
                   metadata.Marker.filter(
                     (marker) =>
@@ -1534,6 +1606,7 @@ function Watch() {
                             marker.type === "intro"
                         )[0].endTimeOffset / 1000;
                       player.current.seekTo(time + 1);
+                      syncSeek(time + 1);
                     }}
                   >
                     <Box
@@ -1564,7 +1637,6 @@ function Watch() {
                 mountOnEnter
                 unmountOnExit
                 in={
-                  (room ? isHost : true) &&
                   metadata.Marker &&
                   metadata.Marker.filter(
                     (marker) =>
@@ -1615,6 +1687,7 @@ function Watch() {
                             !marker.final
                         )[0].endTimeOffset / 1000;
                       player.current.seekTo(time + 1);
+                      syncSeek(time + 1);
                     }}
                   >
                     <Box
@@ -1645,7 +1718,6 @@ function Watch() {
                 mountOnEnter
                 unmountOnExit
                 in={
-                  (room ? isHost : true) &&
                   metadata.Marker &&
                   metadata.Marker.filter(
                     (marker) =>
@@ -1713,9 +1785,8 @@ function Watch() {
                   >
                     <IconButton
                       onClick={() => {
-                        if (room && !isHost) socket?.disconnect();
-                        if (room && isHost)
-                          socket?.emit("RES_SYNC_PLAYBACK_END");
+                        if (room && !isHost) disconnectWatchTogether();
+                        if (room && isHost) syncEndPlayback();
 
                         if (itemID && player.current)
                           getTimelineUpdate(
@@ -1827,7 +1898,7 @@ function Watch() {
                           bufferTime={buffered * 1000}
                           onChange={(value) => {
                             player.current?.seekTo(value / 1000);
-                            socket?.emit("EVNT_SYNC_SEEK", value / 1000);
+                            syncSeek(value / 1000);
                           }}
                           getPreviewScreenUrl={(value) => {
                             if (
@@ -1882,8 +1953,9 @@ function Watch() {
                         <IconButton
                           onClick={() => {
                             setPlaying(!playing);
-                            if (playing) socket?.emit("EVNT_SYNC_PAUSE");
-                            else socket?.emit("EVNT_SYNC_RESUME");
+                            const currentTime = player.current?.getCurrentTime() ?? 0;
+                            if (playing) syncPause(currentTime);
+                            else syncPlay(currentTime);
                           }}
                           onKeyDown={(e) => {
                             e.preventDefault();
@@ -1905,7 +1977,7 @@ function Watch() {
                           )}
                         </IconButton>
 
-                        {playQueue && !(room && !isHost) && (
+                        {playQueue && (
                           <NextEPButton queue={playQueue} />
                         )}
                       </Box>
@@ -1998,7 +2070,7 @@ function Watch() {
                           <VolumeUpRounded fontSize="small" />
                         </IconButton>
 
-                        {metadata.type === "episode" && !(room && !isHost) && (
+                        {metadata.type === "episode" && (
                           <WatchShowChildView
                             item={metadata}
                             controlElementsVisibleState={[
@@ -2136,8 +2208,9 @@ function Watch() {
                   switch (e.detail) {
                     case 1:
                       setPlaying((state) => {
-                        if (state) socket?.emit("EVNT_SYNC_PAUSE");
-                        else socket?.emit("EVNT_SYNC_RESUME");
+                        const currentTime = player.current?.getCurrentTime() ?? 0;
+                        if (state) syncPause(currentTime);
+                        else syncPlay(currentTime);
                         return !state;
                       });
                       break;
@@ -2145,7 +2218,7 @@ function Watch() {
                       if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen();
                         setPlaying(true);
-                        socket?.emit("EVNT_SYNC_RESUME");
+                        syncPlay(player.current?.getCurrentTime() ?? 0);
                       } else document.exitFullscreen();
                       break;
                     default:
@@ -2183,6 +2256,8 @@ function Watch() {
 
                   if (progress.playedSeconds > lastProgressValueRef.current + 0.25) {
                     lastProgressValueRef.current = progress.playedSeconds;
+                    recoveryWindowStartedAtRef.current = 0;
+                    recoveryAttemptCountRef.current = 0;
                   }
                 }}
                 onPause={() => {
@@ -2209,12 +2284,12 @@ function Watch() {
                     err?.error?.toString?.() ??
                     "";
 
-                  if (recoverFromPausedTooLong("player", undefined, rawMessage))
-                    return;
                   if (showError) return;
 
+                  if (queueAutomaticRecovery("player", undefined, rawMessage))
+                    return;
+
                   setPlaying(false);
-                  emitAutomaticSyncPause("player");
 
                   // filter out links from the error messages
                   if (!rawMessage) return;
@@ -2238,11 +2313,10 @@ function Watch() {
                   },
                 }}
                 onEnded={() => {
-                  if (room && !isHost) return;
                   if (!playQueue) return console.log("No play queue");
 
                   if (metadata.type !== "episode") {
-                    if (room && isHost) socket?.emit("RES_SYNC_PLAYBACK_END");
+                    if (room) syncEndPlayback();
                     return navigate(
                       `/browse/${metadata.librarySectionID}?${queryBuilder({
                         mid: metadata.ratingKey,
@@ -2252,7 +2326,7 @@ function Watch() {
 
                   const next = playQueue[1];
                   if (!next) {
-                    if (room && isHost) socket?.emit("RES_SYNC_PLAYBACK_END");
+                    if (room) syncEndPlayback();
                     return navigate(
                       `/browse/${metadata.librarySectionID}?${queryBuilder({
                         mid: metadata.grandparentRatingKey,

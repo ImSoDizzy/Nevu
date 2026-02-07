@@ -5,9 +5,9 @@ import { useSyncInterfaceState } from "../components/PerPlexedSync";
 import { useNavigate } from "react-router-dom";
 
 function WaitingRoom() {
-  const [loading, setLoading] = React.useState(true);
+  const [loading] = React.useState(true);
 
-  const { room, isHost, socket } = useSyncSessionState();
+  const { room, isHost, playback, requestState } = useSyncSessionState();
   const { setOpen } = useSyncInterfaceState();
   const navigate = useNavigate();
 
@@ -16,13 +16,14 @@ function WaitingRoom() {
   }, [room, isHost, navigate]);
 
   useEffect(() => {
-    if(!socket) return;
+    if (!room) return;
+    requestState();
+  }, [requestState, room]);
 
-    socket.once("RES_SYNC_RESYNC_PLAYBACK", (user, data: PerPlexed.Sync.PlayBackState) => {
-      console.log("Playback resync received", data);
-      navigate(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
-    })
-  }, [navigate, socket]);
+  useEffect(() => {
+    if (!room || !playback?.key) return;
+    navigate(`/watch/${playback.key}?t=${Math.floor(playback.positionMs)}`);
+  }, [navigate, playback?.key, playback?.positionMs, room]);
 
   return (
     <Box
@@ -54,7 +55,7 @@ function WaitingRoom() {
           marginTop: "20px",
         }}
       >
-        Waiting for host to start playback...
+        Waiting for playback to start...
       </Typography>
 
       {loading && (

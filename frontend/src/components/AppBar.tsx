@@ -173,7 +173,7 @@ function Appbar() {
             <ListItemIcon>
               <PeopleRounded fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Watch2Gether</ListItemText>
+            <ListItemText>Watch Together</ListItemText>
           </MenuItem>
         )}
 

@@ -13,7 +13,7 @@ import React from "react";
 export interface ToastState {
   toasts: ToastProps[];
   addToast: (
-    user: PerPlexed.Sync.Member,
+    user: PerPlexed.WatchTogether.Member,
     icon: ToastIcons,
     message: string,
     duration: number
@@ -23,7 +23,7 @@ export interface ToastState {
 export const useToast = create<ToastState>((set) => ({
   toasts: [],
   addToast: (
-    user: PerPlexed.Sync.Member,
+    user: PerPlexed.WatchTogether.Member,
     icon: ToastIcons,
     message: string,
     duration: number = 5000
@@ -50,7 +50,7 @@ interface ToastProps {
   id: number;
   duration: number;
   message: string;
-  user: PerPlexed.Sync.Member;
+  user: PerPlexed.WatchTogether.Member;
   icon: ToastIcons;
   toRemove?: boolean;
 }
@@ -123,7 +123,7 @@ export function Toast({
   duration = 5000,
 }: {
   id: number;
-  user: PerPlexed.Sync.Member;
+  user: PerPlexed.WatchTogether.Member;
   icon: ToastIcons;
   message: string;
   duration?: number;

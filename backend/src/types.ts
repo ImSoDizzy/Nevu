@@ -30,6 +30,54 @@ export namespace PerPlexed {
         }
     }
 
+    export namespace WatchTogether {
+        export type PlaybackMode = "playing" | "paused";
+        export type ControlActionType = "setMedia" | "play" | "pause" | "seek" | "end";
+
+        export interface SocketError {
+            type: string;
+            message: string;
+        }
+
+        export interface Member {
+            uid: string;
+            socket: string;
+            name: string;
+            avatar: string;
+        }
+
+        export interface PlaybackState {
+            key: string | null;
+            state: PlaybackMode;
+            positionMs: number;
+            updatedAtMs: number;
+        }
+
+        export interface Ready {
+            room: string;
+            host: boolean;
+            seq: number;
+            playback: PlaybackState;
+        }
+
+        export interface ControlAction {
+            actionId: string;
+            actionType: ControlActionType;
+            mediaKey?: string;
+            positionMs?: number;
+            state?: PlaybackMode;
+            actorClientTs?: number;
+        }
+
+        export interface StateUpdate {
+            room: string;
+            seq: number;
+            actor: Member | null;
+            actionType: ControlActionType | "sync";
+            playback: PlaybackState;
+        }
+    }
+
     export namespace Remote {
         export type ActionType = "resume" | "pause" | "seek" | "launch" | "skipMarker" | "setAudioTrack" | "setSubtitleTrack" | "setQuality";
 

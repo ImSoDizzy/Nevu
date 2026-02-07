@@ -76,7 +76,7 @@ function PerPlexedSync() {
             fontWeight: "bold",
           }}
         >
-          Nevu Sync
+          Watch Together
         </Typography>
 
         <Divider
