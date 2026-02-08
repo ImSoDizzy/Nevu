@@ -132,6 +132,8 @@ function Watch() {
   const recoveryInFlightRef = useRef(false);
   const lastHandledPlaybackVersionRef = useRef("");
   const lastAnnouncedPlaybackRef = useRef("");
+  const metadataLoadVersionRef = useRef(0);
+  const currentItemIDRef = useRef(itemID);
 
   const [volumePopoverAnchor, setVolumePopoverAnchor] =
     useState<HTMLButtonElement | null>(null);
@@ -156,10 +158,13 @@ function Watch() {
     sendControl: sendWatchTogetherControl,
     disconnect: disconnectWatchTogether,
   } = useSyncSessionState();
-  const { open: syncInterfaceOpen, setOpen: setSyncInterfaceOpen } =
-    useSyncInterfaceState();
+  const { setOpen: setSyncInterfaceOpen } = useSyncInterfaceState();
 
   const [controlElementsVisible, setControlElementsVisible] = useState(false);
+
+  useEffect(() => {
+    currentItemIDRef.current = itemID;
+  }, [itemID]);
 
   useEffect(() => {
     setControlElementsVisible(volumePopoverOpen || showTune);
@@ -337,49 +342,96 @@ function Watch() {
     sendWatchTogetherPlaybackControl("end");
   };
 
+  const syncSetMedia = (
+    mediaKey: string,
+    options?: {
+      positionSeconds?: number;
+      state?: PerPlexed.WatchTogether.PlaybackMode;
+    }
+  ) => {
+    const positionSeconds = options?.positionSeconds ?? 0;
+    const state =
+      options?.state ??
+      watchTogetherPlayback?.state ??
+      (playing ? "playing" : "paused");
+
+    if (room) {
+      const sent = sendWatchTogetherPlaybackControl("setMedia", {
+        mediaKey,
+        positionSeconds,
+        state,
+      });
+
+      if (!sent) requestWatchTogetherState();
+      return sent;
+    }
+
+    navigate(
+      `/watch/${mediaKey}?tms=${Math.max(0, Math.floor(positionSeconds * 1000))}`
+    );
+    return true;
+  };
+
   useEffect(() => {
     return () => {
       if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
     };
   }, []);
 
-  const loadMetadata = async (itemID: string) => {
-    await getUniversalDecision(itemID, {
-      maxVideoBitrate: quality.bitrate,
-      autoAdjustQuality: quality.auto,
-    });
+  const loadMetadata = async (
+    targetItemID: string,
+    isStale: () => boolean = () => currentItemIDRef.current !== targetItemID
+  ) => {
+    try {
+      await getUniversalDecision(targetItemID, {
+        maxVideoBitrate: quality.bitrate,
+        autoAdjustQuality: quality.auto,
+      });
+      if (isStale()) return null;
 
-    let Metadata: Plex.Metadata | null = null;
-    await getLibraryDir(`/library/metadata/${itemID}`, {
-      ...getIncludeProps(),
-    }).then((mediacontainer) => {
-      Metadata = mediacontainer.Metadata?.[0] ?? null;
-      if (["movie", "episode"].includes(Metadata?.type as string)) {
-        setMetadata(Metadata);
-        if (Metadata?.type === "episode") {
-          getLibraryMeta(Metadata?.grandparentRatingKey as string).then(
-            (show) => {
-              setShowMetadata(show);
-            }
-          );
+      const mediaContainer = await getLibraryDir(`/library/metadata/${targetItemID}`, {
+        ...getIncludeProps(),
+      });
+      if (isStale()) return null;
+
+      const metadata = mediaContainer.Metadata?.[0] ?? null;
+      if (!metadata) return null;
+
+      if (["movie", "episode"].includes(metadata.type as string)) {
+        setMetadata(metadata);
+        if (metadata.type === "episode") {
+          const show = await getLibraryMeta(metadata.grandparentRatingKey as string);
+          if (isStale()) return metadata;
+          setShowMetadata(show);
+        } else {
+          setShowMetadata(null);
         }
       } else {
         console.error("Invalid metadata type");
+        return null;
       }
-    });
 
-    if (!Metadata) return;
-    const serverPreferences = await getServerPreferences();
+      if (isStale()) return metadata;
+      const serverPreferences = await getServerPreferences();
+      if (isStale()) return metadata;
 
-    getPlayQueue(
-      `server://${
-        serverPreferences.machineIdentifier
-      }/com.plexapp.plugins.library/library/metadata/${
-        (Metadata as Plex.Metadata).ratingKey
-      }`
-    ).then((queue) => {
+      const queue = await getPlayQueue(
+        `server://${
+          serverPreferences.machineIdentifier
+        }/com.plexapp.plugins.library/library/metadata/${
+          metadata.ratingKey
+        }`
+      );
+      if (isStale()) return metadata;
+
       setPlayQueue(queue);
-    });
+      return metadata;
+    } catch (error) {
+      if (!isStale()) {
+        console.error("Failed to load metadata", error);
+      }
+      return null;
+    }
   };
 
   const [url, setURL] = useState<string>("");
@@ -398,20 +450,26 @@ function Watch() {
     document.addEventListener("mousemove", whenMouseMoves);
     return () => {
       document.removeEventListener("mousemove", whenMouseMoves);
+      clearTimeout(timeout);
     };
   }, [playing]);
 
   const [showInfo, setShowInfo] = useState(false);
   useEffect(() => {
+    let showInfoTimer: ReturnType<typeof setTimeout> | null = null;
     playingRef.current = playing;
 
     if (!playingRef.current) {
-      setTimeout(() => {
+      showInfoTimer = setTimeout(() => {
         if (!playingRef.current) setShowInfo(true);
       }, 5000);
     } else {
       setShowInfo(false);
     }
+
+    return () => {
+      if (showInfoTimer) clearTimeout(showInfoTimer);
+    };
   }, [playing]);
 
   useEffect(() => {
@@ -480,7 +538,7 @@ function Watch() {
 
   useEffect(() => {
     if (!room || !watchTogetherPlayback) return;
-    const playbackVersion = `${playbackSeq}:${watchTogetherPlayback.updatedAtMs}:${watchTogetherPlayback.key ?? "none"}:${watchTogetherPlayback.state}`;
+    const playbackVersion = `${room}:${playbackSeq}:${watchTogetherPlayback.updatedAtMs}:${watchTogetherPlayback.key ?? "none"}:${watchTogetherPlayback.state}`;
     if (playbackVersion === lastHandledPlaybackVersionRef.current) return;
 
     lastHandledPlaybackVersionRef.current = playbackVersion;
@@ -494,12 +552,18 @@ function Watch() {
       navigate(
         `/watch/${watchTogetherPlayback.key}?tms=${Math.floor(
           watchTogetherPlayback.positionMs
-        )}`
+        )}`,
+        { replace: true }
       );
       return;
     }
 
-    const targetSeconds = watchTogetherPlayback.positionMs / 1000;
+    const targetSecondsRaw = watchTogetherPlayback.positionMs / 1000;
+    const durationSeconds = player.current?.getDuration() ?? 0;
+    const targetSeconds =
+      durationSeconds > 0
+        ? Math.min(targetSecondsRaw, Math.max(0, durationSeconds - 0.25))
+        : targetSecondsRaw;
     const currentSeconds = player.current?.getCurrentTime() ?? 0;
     const drift = absoluteDifference(currentSeconds, targetSeconds);
     const maxDriftSeconds =
@@ -510,12 +574,12 @@ function Watch() {
 
     setPlaying(watchTogetherPlayback.state === "playing");
   }, [
-    isHost,
     itemID,
     navigate,
     playbackSeq,
     room,
     watchTogetherPlayback,
+    isHost,
   ]);
 
   useEffect(() => {
@@ -567,106 +631,131 @@ function Watch() {
       }
     `;
     document.head.appendChild(style);
+    metadataLoadVersionRef.current += 1;
+    const loadVersion = metadataLoadVersionRef.current;
+    const isStaleLoad = () => loadVersion !== metadataLoadVersionRef.current;
 
     (async () => {
-      setReady(false);
+      try {
+        setReady(false);
 
-      if (!itemID) return;
-      resetPlexPlaybackSession();
+        if (!itemID) return;
+        resetPlexPlaybackSession();
 
-      const metadata = await getLibraryMeta(itemID);
+        const metadata = await getLibraryMeta(itemID);
+        if (isStaleLoad()) return;
 
-      const autoMatchTracks =
-        useUserSettings.getState().settings["AUTO_MATCH_TRACKS"] === "true";
+        const autoMatchTracks =
+          useUserSettings.getState().settings["AUTO_MATCH_TRACKS"] === "true";
 
-      const audioTrackPref =
-        useUserSettings.getState().settings[
-          `MEDIA_PREF_AUDIO-${metadata.grandparentRatingKey}`
-        ];
-      const subtitleTrackPref =
-        useUserSettings.getState().settings[
-          `MEDIA_PREF_SUBTITLE-${metadata.grandparentRatingKey}`
-        ];
+        const audioTrackPref =
+          useUserSettings.getState().settings[
+            `MEDIA_PREF_AUDIO-${metadata.grandparentRatingKey}`
+          ];
+        const subtitleTrackPref =
+          useUserSettings.getState().settings[
+            `MEDIA_PREF_SUBTITLE-${metadata.grandparentRatingKey}`
+          ];
 
-      // Match audio track and subtitle track with the preferences
-      if (audioTrackPref && autoMatchTracks) {
-        const audioTrackPrefParsed: {
-          index: number;
-          title: string;
-        } = JSON.parse(audioTrackPref);
+        // Match audio track and subtitle track with the preferences
+        if (audioTrackPref && autoMatchTracks) {
+          const audioTrackPrefParsed: {
+            index: number;
+            title: string;
+          } = JSON.parse(audioTrackPref);
 
-        console.log(
-          `Preferred Audio Track - Index: ${audioTrackPrefParsed.index}, Title: ${audioTrackPrefParsed.title}`
-        );
-
-        const audioTrack = metadata.Media?.[0].Part[0].Stream.sort((a, b) => {
-          return (
-            Math.abs(a.index - audioTrackPrefParsed.index) -
-            Math.abs(b.index - audioTrackPrefParsed.index)
-          );
-        }).find((stream) => {
-          return (
-            stream.streamType === 2 &&
-            stream.extendedDisplayTitle === audioTrackPrefParsed.title
-          );
-        });
-
-        if (audioTrack) {
           console.log(
-            `Selected Audio Track - Index: ${audioTrack.index}, Title: ${audioTrack.extendedDisplayTitle}`
+            `Preferred Audio Track - Index: ${audioTrackPrefParsed.index}, Title: ${audioTrackPrefParsed.title}`
           );
-          await putAudioStream(
-            metadata.Media?.[0].Part[0].id ?? 0,
-            audioTrack.id
-          );
-        }
-      }
 
-      if (subtitleTrackPref && autoMatchTracks) {
-        const subtitleTrackPrefParsed: {
-          index: number;
-          title: string;
-        } = JSON.parse(subtitleTrackPref);
-
-        console.log(
-          `Preferred Subtitle Track - Index: ${subtitleTrackPrefParsed.index}, Title: ${subtitleTrackPrefParsed.title}`
-        );
-
-        if (subtitleTrackPrefParsed.index === -1) {
-          await putSubtitleStream(metadata.Media?.[0].Part[0].id ?? 0, 0);
-        } else {
-          const subtitleTrack = metadata.Media?.[0].Part[0].Stream.sort(
-            (a, b) => {
+          const audioTrackCandidates =
+            metadata.Media?.[0].Part[0].Stream.sort((a, b) => {
               return (
-                Math.abs(a.index - subtitleTrackPrefParsed.index) -
-                Math.abs(b.index - subtitleTrackPrefParsed.index)
+                Math.abs(a.index - audioTrackPrefParsed.index) -
+                Math.abs(b.index - audioTrackPrefParsed.index)
               );
-            }
-          ).find((stream) => {
+            }) ?? [];
+          const resolvedAudioTrack = audioTrackCandidates.find((stream) => {
             return (
-              stream.streamType === 3 &&
-              stream.extendedDisplayTitle === subtitleTrackPrefParsed.title
+              stream.streamType === 2 &&
+              stream.extendedDisplayTitle === audioTrackPrefParsed.title
             );
           });
 
-          if (subtitleTrack) {
+          if (resolvedAudioTrack) {
             console.log(
-              `Selected Subtitle Track - Index: ${subtitleTrack.index}, Title: ${subtitleTrack.extendedDisplayTitle}`
+              `Selected Audio Track - Index: ${resolvedAudioTrack.index}, Title: ${resolvedAudioTrack.extendedDisplayTitle}`
             );
-            await putSubtitleStream(
+            await putAudioStream(
               metadata.Media?.[0].Part[0].id ?? 0,
-              subtitleTrack.id
+              resolvedAudioTrack.id
             );
+            if (isStaleLoad()) return;
           }
         }
+
+        if (subtitleTrackPref && autoMatchTracks) {
+          const subtitleTrackPrefParsed: {
+            index: number;
+            title: string;
+          } = JSON.parse(subtitleTrackPref);
+
+          console.log(
+            `Preferred Subtitle Track - Index: ${subtitleTrackPrefParsed.index}, Title: ${subtitleTrackPrefParsed.title}`
+          );
+
+          if (subtitleTrackPrefParsed.index === -1) {
+            await putSubtitleStream(metadata.Media?.[0].Part[0].id ?? 0, 0);
+            if (isStaleLoad()) return;
+          } else {
+            const subtitleTrack = metadata.Media?.[0].Part[0].Stream.sort(
+              (a, b) => {
+                return (
+                  Math.abs(a.index - subtitleTrackPrefParsed.index) -
+                  Math.abs(b.index - subtitleTrackPrefParsed.index)
+                );
+              }
+            ).find((stream) => {
+              return (
+                stream.streamType === 3 &&
+                stream.extendedDisplayTitle === subtitleTrackPrefParsed.title
+              );
+            });
+
+            if (subtitleTrack) {
+              console.log(
+                `Selected Subtitle Track - Index: ${subtitleTrack.index}, Title: ${subtitleTrack.extendedDisplayTitle}`
+              );
+              await putSubtitleStream(
+                metadata.Media?.[0].Part[0].id ?? 0,
+                subtitleTrack.id
+              );
+              if (isStaleLoad()) return;
+            }
+          }
+        }
+
+        console.log(`Setting URL: ${getUrl(metadata, quality)}`);
+
+        await loadMetadata(itemID, isStaleLoad);
+        if (isStaleLoad()) return;
+        setURL(getUrl(metadata, quality));
+        setShowError(false);
+      } catch (error) {
+        if (isStaleLoad()) return;
+        console.error("Failed to initialize watch playback", error);
+        setShowError("Failed to load media");
+        setPlaying(false);
       }
-
-      console.log(`Setting URL: ${getUrl(metadata, quality)}`);
-
-      await loadMetadata(itemID);
-      setURL(getUrl(metadata, quality));
-      setShowError(false);
     })();
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+      if (metadataLoadVersionRef.current === loadVersion) {
+        metadataLoadVersionRef.current += 1;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemID, theme.palette.primary.main]);
 
@@ -739,16 +828,27 @@ function Watch() {
                     return;
                   }
 
-                  if (metadata.type === "movie")
+                  if (metadata.type === "movie") {
+                    if (room) {
+                      syncEndPlayback();
+                      return;
+                    }
+
                     return navigate(
                       `/browse/${metadata.librarySectionID}?${queryBuilder({
                         mid: metadata.ratingKey,
                       })}`
                     );
+                  }
 
                   if (!playQueue) return;
                   const next = playQueue[1];
-                  if (!next)
+                  if (!next) {
+                    if (room) {
+                      syncEndPlayback();
+                      return;
+                    }
+
                     return navigate(
                       `/browse/${metadata.librarySectionID}?${queryBuilder({
                         mid: metadata.grandparentRatingKey,
@@ -756,8 +856,12 @@ function Watch() {
                         iid: metadata.ratingKey,
                       })}`
                     );
+                  }
 
-                  navigate(`/watch/${next.ratingKey}`);
+                  syncSetMedia(next.ratingKey, {
+                    positionSeconds: 0,
+                    state: "playing",
+                  });
                 }
                 break;
               case "intro":
@@ -1781,11 +1885,23 @@ function Watch() {
                 >
                   <PlaybackNextEPButton
                     player={player}
-                    playbackBarRef={playbackBarRef}
                     metadata={metadata}
                     playQueue={playQueue}
                     navigate={navigate}
                     playing={playing}
+                    onNextEpisode={(ratingKey) =>
+                      syncSetMedia(ratingKey, {
+                        positionSeconds: 0,
+                        state: "playing",
+                      })
+                    }
+                    onEndPlayback={
+                      room
+                        ? () => {
+                            syncEndPlayback();
+                          }
+                        : undefined
+                    }
                   />
                 </Box>
               </Fade>
@@ -2019,7 +2135,15 @@ function Watch() {
                         </IconButton>
 
                         {playQueue && (
-                          <NextEPButton queue={playQueue} />
+                          <NextEPButton
+                            queue={playQueue}
+                            onNextEpisode={(ratingKey) =>
+                              syncSetMedia(ratingKey, {
+                                positionSeconds: 0,
+                                state: "playing",
+                              })
+                            }
+                          />
                         )}
                       </Box>
 
@@ -2118,6 +2242,12 @@ function Watch() {
                               controlElementsVisible,
                               setControlElementsVisible,
                             ]}
+                            onSelectEpisode={(ratingKey) =>
+                              syncSetMedia(ratingKey, {
+                                positionSeconds: 0,
+                                state: "playing",
+                              })
+                            }
                           />
                         )}
 
@@ -2300,9 +2430,17 @@ function Watch() {
 
                   if (!seekMs || Number.isNaN(seekMs)) return;
 
-                  if (lastAppliedTime.current === seekMs) return;
-                  player.current.seekTo(seekMs / 1000);
-                  lastAppliedTime.current = seekMs;
+                  const durationMs = Math.floor(
+                    (player.current?.getDuration() ?? 0) * 1000
+                  );
+                  const boundedSeekMs =
+                    durationMs > 0
+                      ? Math.min(seekMs, Math.max(0, durationMs - 250))
+                      : seekMs;
+
+                  if (lastAppliedTime.current === boundedSeekMs) return;
+                  player.current.seekTo(boundedSeekMs / 1000);
+                  lastAppliedTime.current = boundedSeekMs;
                 }}
                 onProgress={(progress) => {
                   setProgress(progress.playedSeconds);
@@ -2380,7 +2518,10 @@ function Watch() {
                   if (!playQueue) return console.log("No play queue");
 
                   if (metadata.type !== "episode") {
-                    if (room) syncEndPlayback();
+                    if (room) {
+                      syncEndPlayback();
+                      return;
+                    }
                     return navigate(
                       `/browse/${metadata.librarySectionID}?${queryBuilder({
                         mid: metadata.ratingKey,
@@ -2390,7 +2531,10 @@ function Watch() {
 
                   const next = playQueue[1];
                   if (!next) {
-                    if (room) syncEndPlayback();
+                    if (room) {
+                      syncEndPlayback();
+                      return;
+                    }
                     return navigate(
                       `/browse/${metadata.librarySectionID}?${queryBuilder({
                         mid: metadata.grandparentRatingKey,
@@ -2400,7 +2544,10 @@ function Watch() {
                     );
                   }
 
-                  navigate(`/watch/${next.ratingKey}`);
+                  syncSetMedia(next.ratingKey, {
+                    positionSeconds: 0,
+                    state: "playing",
+                  });
                 }}
                 url={url}
                 width="100%"
@@ -2416,12 +2563,18 @@ function Watch() {
 
 export default Watch;
 
-function NextEPButton({ queue }: { queue?: Plex.Metadata[] }) {
+function NextEPButton({
+  queue,
+  onNextEpisode,
+}: {
+  queue?: Plex.Metadata[];
+  onNextEpisode?: (ratingKey: string) => void;
+}) {
   const navigate = useNavigate();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  if (!queue) return <></>;
+  if (!queue || !queue[1]) return <></>;
 
   return (
     <>
@@ -2528,20 +2681,23 @@ function NextEPButton({ queue }: { queue?: Plex.Metadata[] }) {
           </Fade>
         )}
       </Popper>
-      {queue && queue[1] && (
-        <IconButton
-          onClick={() => {
-            navigate(`/watch/${queue[1].ratingKey}`);
-          }}
-          onKeyDown={(e) => {
-            e.preventDefault();
-          }}
-          onMouseEnter={(e) => setAnchorEl(e.currentTarget)}
-          onMouseLeave={() => setAnchorEl(null)}
-        >
-          <SkipNextRounded fontSize="small" />
-        </IconButton>
-      )}
+      <IconButton
+        onClick={() => {
+          if (onNextEpisode) {
+            onNextEpisode(queue[1].ratingKey);
+            return;
+          }
+
+          navigate(`/watch/${queue[1].ratingKey}`);
+        }}
+        onKeyDown={(e) => {
+          e.preventDefault();
+        }}
+        onMouseEnter={(e) => setAnchorEl(e.currentTarget)}
+        onMouseLeave={() => setAnchorEl(null)}
+      >
+        <SkipNextRounded fontSize="small" />
+      </IconButton>
     </>
   );
 }

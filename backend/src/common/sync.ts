@@ -197,7 +197,13 @@ function emitRoomError(socket: Socket, type: string, message: string) {
 
 function getOrCreateRoom(roomQuery: string, socketId: string): { room: RoomRuntime; isHost: boolean } | null {
   if (roomQuery === "new") {
-    const roomId = generateRoomId();
+    let roomId: string;
+    try {
+      roomId = generateRoomId();
+    } catch (error) {
+      console.error("WATCH TOGETHER failed to generate room ID", error);
+      return null;
+    }
     const room: RoomRuntime = {
       id: roomId,
       hostSocketId: socketId,
@@ -413,15 +419,12 @@ io?.on("connection", async (socket) => {
 });
 
 function generateRoomId() {
-  let id: string | null = null;
-  let attempts = 0;
+  const maxAttempts = 20;
+  for (let attempts = 0; attempts < maxAttempts; attempts += 1) {
+    const id = crypto.randomBytes(3).toString("hex");
+    if (!id || rooms.has(id)) continue;
+    return id;
+  }
 
-  do {
-    id = crypto.randomBytes(3).toString("hex");
-    attempts += 1;
-  } while ((rooms.has(id) || !id) && attempts < 20);
-
-  if (!id) throw new Error("Failed to generate room ID");
-
-  return id;
+  throw new Error("Failed to generate unique room ID");
 }

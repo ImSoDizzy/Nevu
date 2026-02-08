@@ -27,8 +27,10 @@ function WaitingRoom() {
 
   useEffect(() => {
     if (!room || !playback?.key) return;
-    navigate(`/watch/${playback.key}?tms=${Math.floor(playback.positionMs)}`);
-  }, [navigate, playback?.key, playback?.positionMs, room]);
+    navigate(`/watch/${playback.key}?tms=${Math.floor(playback.positionMs)}`, {
+      replace: true,
+    });
+  }, [navigate, playback?.key, room]);
 
   return (
     <Box

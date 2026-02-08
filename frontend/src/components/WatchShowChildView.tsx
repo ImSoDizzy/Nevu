@@ -26,12 +26,14 @@ import { useNavigate } from "react-router-dom";
 function WatchShowChildView({
   item,
   controlElementsVisibleState,
+  onSelectEpisode,
 }: {
   item: Plex.Metadata;
   controlElementsVisibleState: [
     boolean,
     React.Dispatch<React.SetStateAction<boolean>>
   ];
+  onSelectEpisode?: (ratingKey: string) => void;
 }) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [seasons, setSeasons] = useState<Plex.Metadata[] | null>(null);
@@ -45,32 +47,35 @@ function WatchShowChildView({
   useEffect(() => {
     setSeasons(null);
     setEpisodes(null);
+    let cancelled = false;
 
     (async () => {
-      const getSeasons = new Promise<Plex.Metadata[]>((resolve) => {
-        getLibraryDir(
-          `/library/metadata/${item.grandparentRatingKey}/children`
-        ).then((data) => {
-          if (!data?.Metadata) return;
-          resolve(data?.Metadata);
-        });
-      });
+      try {
+        const [seasonList, episodeList] = await Promise.all([
+          getLibraryDir(`/library/metadata/${item.grandparentRatingKey}/children`).then(
+            (data) => data?.Metadata ?? []
+          ),
+          getLibraryDir(`/library/metadata/${item.grandparentRatingKey}/allLeaves`).then(
+            (data) => data?.Metadata ?? []
+          ),
+        ]);
 
-      const getEpisodes = new Promise<Plex.Metadata[]>((resolve) => {
-        getLibraryDir(
-          `/library/metadata/${item.grandparentRatingKey}/allLeaves`
-        ).then((data) => {
-          if (!data?.Metadata) return;
-          resolve(data?.Metadata);
-        });
-      });
+        if (cancelled) return;
 
-      const [seasons, episodes] = await Promise.all([getSeasons, getEpisodes]);
-
-      setSeasons(seasons);
-      setEpisodes(episodes);
-      setSelectedSeason(item.parentIndex ?? 1);
+        setSeasons(seasonList);
+        setEpisodes(episodeList);
+        setSelectedSeason(item.parentIndex ?? 1);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to load show child view metadata", error);
+        setSeasons([]);
+        setEpisodes([]);
+      }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [item]);
 
   useEffect(() => {
@@ -245,7 +250,11 @@ function WatchShowChildView({
                               key={episode.ratingKey}
                               onClick={() => {
                                 if (episode.ratingKey !== item.ratingKey) {
-                                  navigate(`/watch/${episode.ratingKey}`);
+                                  if (onSelectEpisode) {
+                                    onSelectEpisode(episode.ratingKey);
+                                  } else {
+                                    navigate(`/watch/${episode.ratingKey}`);
+                                  }
                                   setAnchorEl(null);
                                 }
                               }}

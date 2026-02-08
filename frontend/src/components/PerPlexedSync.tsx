@@ -33,6 +33,7 @@ function PerPlexedSync() {
   const [inputRoom, setInputRoom] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [page, setPage] = React.useState("home");
+  const connectAttemptRef = React.useRef(0);
 
   useEffect(() => {
     setInputRoom("");
@@ -40,6 +41,13 @@ function PerPlexedSync() {
   }, [page]);
 
   useEffect(() => {
+    if (!open) {
+      connectAttemptRef.current += 1;
+      const syncState = useSyncSessionState.getState();
+      if (syncState.status === "connecting" && !syncState.room) {
+        syncState.disconnect();
+      }
+    }
     if (!open && !room) setPage("home");
   }, [room, open]);
 
@@ -239,12 +247,14 @@ function PerPlexedSync() {
                 variant="text"
                 color="primary"
                 onClick={async () => {
+                  connectAttemptRef.current += 1;
+                  const attemptId = connectAttemptRef.current;
                   setPage("load");
                   const res = await useSyncSessionState
                     .getState()
                     .connect(inputRoom, navigate);
 
-                  console.log(res);
+                  if (attemptId !== connectAttemptRef.current) return;
 
                   if (res !== true) {
                     setPage("join");
@@ -293,13 +303,17 @@ function PerPlexedSync() {
                 variant="text"
                 color="primary"
                 onClick={async () => {
+                  connectAttemptRef.current += 1;
+                  const attemptId = connectAttemptRef.current;
                   setPage("load");
                   const res = await useSyncSessionState
                     .getState()
                     .connect(undefined, navigate);
+                  if (attemptId !== connectAttemptRef.current) return;
                   if (res !== true) {
                     setError(res.message);
                     setPage("home");
+                    return;
                   }
                   setPage("connected");
                 }}

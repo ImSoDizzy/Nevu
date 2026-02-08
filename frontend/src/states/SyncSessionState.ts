@@ -30,6 +30,7 @@ export interface SyncSessionState {
 
 let lastPlaybackToastKey = "";
 let lastPlaybackToastAt = 0;
+let activeConnectAttempt = 0;
 
 function shouldThrottlePlaybackToast(key: string, windowMs = 2000) {
   const now = Date.now();
@@ -59,6 +60,8 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
   ...resetSyncSessionState(),
 
   connect: async (room, navigate) => {
+    activeConnectAttempt += 1;
+    const attemptId = activeConnectAttempt;
     const current = get().socket;
     if (current) {
       (
@@ -95,17 +98,26 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
       set({
         ...resetSyncSessionState(),
         status: "connecting",
+        socket,
       });
 
       let resolved = false;
+      let connectTimeout: ReturnType<typeof setTimeout> | null = null;
+
+      const isOutdatedSocket = () => {
+        return attemptId !== activeConnectAttempt || get().socket !== socket;
+      };
 
       const resolveOnce = (result: true | PerPlexed.WatchTogether.SocketError) => {
         if (resolved) return;
         resolved = true;
+        if (connectTimeout) clearTimeout(connectTimeout);
         resolve(result);
       };
 
       socket.on("wt:room:ready", (data: PerPlexed.WatchTogether.Ready) => {
+        if (isOutdatedSocket()) return;
+
         const manager = socket.io as { opts?: { query?: Record<string, string> } };
         if (manager?.opts) {
           manager.opts.query = {
@@ -127,7 +139,14 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
         resolveOnce(true);
       });
 
-      setTimeout(() => {
+      connectTimeout = setTimeout(() => {
+        if (isOutdatedSocket()) {
+          resolveOnce({
+            type: "cancelled",
+            message: "Connection attempt superseded",
+          });
+          return;
+        }
         if (resolved) return;
 
         const timeoutErr: PerPlexed.WatchTogether.SocketError = {
@@ -140,15 +159,19 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
           lastError: timeoutErr,
         });
 
+        (socket as Socket & { __manualDisconnect?: boolean }).__manualDisconnect =
+          true;
         socket.disconnect();
         resolveOnce(timeoutErr);
       }, 5000);
 
       socket.on("connect", () => {
+        if (isOutdatedSocket()) return;
         console.log("Watch Together connected to server");
       });
 
       socket.on("disconnect", () => {
+        if (isOutdatedSocket()) return;
         console.log("Watch Together disconnected from server");
 
         const intentional =
@@ -172,6 +195,7 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
       });
 
       socket.on("wt:member:joined", (member: PerPlexed.WatchTogether.Member) => {
+        if (isOutdatedSocket()) return;
         set((state) => ({
           members: {
             ...state.members,
@@ -185,6 +209,7 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
       });
 
       socket.on("wt:member:left", (member: PerPlexed.WatchTogether.Member) => {
+        if (isOutdatedSocket()) return;
         set((state) => {
           const nextMembers = { ...state.members };
           delete nextMembers[member.socket];
@@ -200,6 +225,7 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
       });
 
       socket.on("wt:state:update", (update: PerPlexed.WatchTogether.StateUpdate) => {
+        if (isOutdatedSocket()) return;
         set((state) => {
           const previous = state.playback;
           const previousUpdatedAt = previous?.updatedAtMs ?? 0;
@@ -244,7 +270,15 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
       });
 
       socket.on("wt:room:error", (error: PerPlexed.WatchTogether.SocketError) => {
+        if (isOutdatedSocket()) return;
         set({ lastError: error });
+        const duringConnect = !resolved;
+        if (duringConnect) {
+          (
+            socket as Socket & { __manualDisconnect?: boolean }
+          ).__manualDisconnect = true;
+          socket.disconnect();
+        }
         resolveOnce(error);
 
         if (error.type === "host_disconnect") {
@@ -261,6 +295,7 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
   },
 
   disconnect: () => {
+    activeConnectAttempt += 1;
     const socket = get().socket;
     if (socket) {
       (

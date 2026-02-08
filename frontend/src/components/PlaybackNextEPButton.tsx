@@ -7,17 +7,19 @@ import { useUserSettings } from "../states/UserSettingsState";
 function PlaybackNextEPButton({
   player,
   playing,
-  playbackBarRef,
   metadata,
   playQueue,
   navigate,
+  onNextEpisode,
+  onEndPlayback,
 }: {
   player: React.MutableRefObject<any>;
   playing: boolean;
-  playbackBarRef: React.MutableRefObject<HTMLDivElement | null>;
   metadata: any;
   playQueue: any;
   navigate: (path: string) => void;
+  onNextEpisode?: (ratingKey: string) => void;
+  onEndPlayback?: () => void;
 }) {
   const theme = useTheme();
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -38,16 +40,27 @@ function PlaybackNextEPButton({
   const handleNavigation = useCallback(() => {
     if (!player.current || !metadata?.Marker) return;
 
-    if (metadata.type === "movie")
+    if (metadata.type === "movie") {
+      if (onEndPlayback) {
+        onEndPlayback();
+        return;
+      }
+
       return navigate(
         `/browse/${metadata.librarySectionID}?${queryBuilder({
           mid: metadata.ratingKey,
         })}`
       );
+    }
 
     if (!playQueue) return;
     const next = playQueue[1];
-    if (!next)
+    if (!next) {
+      if (onEndPlayback) {
+        onEndPlayback();
+        return;
+      }
+
       return navigate(
         `/browse/${metadata.librarySectionID}?${queryBuilder({
           mid: metadata.grandparentRatingKey,
@@ -55,9 +68,15 @@ function PlaybackNextEPButton({
           iid: metadata.ratingKey,
         })}`
       );
+    }
+
+    if (onNextEpisode) {
+      onNextEpisode(next.ratingKey);
+      return;
+    }
 
     navigate(`/watch/${next.ratingKey}?t=0`);
-  }, [player, metadata, playQueue, navigate]);
+  }, [player, metadata, onEndPlayback, onNextEpisode, playQueue, navigate]);
 
   const handleWatchCredits = () => {
     setCountdown(null);
@@ -70,6 +89,8 @@ function PlaybackNextEPButton({
 
     if (countdown <= 0) {
       // Auto-navigate when timer reaches 0
+      setCountdown(null);
+      setShowWatchCredits(false);
       handleNavigation();
       return;
     }
